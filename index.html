@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Yahaha! You found me! Congrats, you just wasted your time :)-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kirakira's website!">
+    <title>Kirakira's Website!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none !important;
+        }
+
+        html, body {
+            cursor: none !important;
+        }
+
+        :root {
+            --primary-color: #ec4899;
+            --secondary-color: #f472b6;
+            --text-color: #831843;
+            --text-light: #9f1239;
+            --bg-color: #fdf2f8;
+            --bg-alt: #fce7f3;
+            --border-color: #fbcfe8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        #rippleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999998;
+        }
+
+        #cursorBall {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            opacity: 1;
+        }
+
+        #cursorBall::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary-color);
+        }
+
+        /* Theme Selection Modal */
+        #themeModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            cursor: auto !important;
+        }
+        
+        #themeModal * {
+            cursor: auto !important;
+        }
+        
+        #themeModal .theme-option,
+        #themeModal button,
+        #themeModal input {
+            cursor: pointer !important;
+        }
+
+        #themeModal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .theme-modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .theme-modal-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .theme-modal-content p {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .theme-option {
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .theme-option.selected {
+            border-color: #000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-option::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-option.selected::after {
+            opacity: 1;
+        }
+
+        .theme-name {
+            position: absolute;
+            bottom: 0.25rem;
+            left: 0;
+            right: 0;
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            padding: 0 0.25rem;
+        }
+
+        .theme-unlock-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .theme-unlock-section p {
+            color: #6b7280;
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-key-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-key-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .theme-key-input input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .theme-key-input button {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .theme-key-input button:hover {
+            background: var(--secondary-color);
+        }
+
+        .theme-key-message {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            min-height: 1rem;
+        }
+
+        .theme-key-message.success {
+            color: #10b981;
+        }
+
+        .theme-key-message.error {
+            color: #ef4444;
+        }
+
+        .theme-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-page-btn {
+            padding: 0.4rem 0.75rem;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .theme-page-btn:hover:not(.active) {
+            background: #e5e7eb;
+        }
+
+        .theme-page {
+            display: none;
+        }
+
+        .theme-page.active {
+            display: block;
+        }
+
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-buttons {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.75rem;
+            z-index: 100;
+        }
+
+        .theme-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .header-buttons {
+                top: 1rem;
+                right: 1rem;
+                gap: 0.5rem;
+            }
+            .theme-button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        nav {
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(253, 242, 248, 0.95);
+            position: relative;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+            background-color: rgba(244, 114, 182, 0.2);
+        }
+
+        main {
+            padding: 4rem 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        section h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Dark Mode Styles */
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --bg-alt: #2a2a2a;
+            --text-color: #e5e5e5;
+            --text-light: #d5d5d5;
+            --border-color: #404040;
+        }
+
+        .dark-mode body {
+            background-color: var(--bg-color);
+        }
+
+        .dark-mode nav {
+            background-color: rgba(26, 26, 26, 0.95) !important;
+        }
+
+        .dark-mode main {
+            background-color: var(--bg-color);
+        }
+
+        .dark-mode .about {
+            background-color: var(--bg-alt);
+        }
+
+        .dark-mode .project-card {
+            background-color: var(--bg-alt);
+        }
+
+        .dark-mode .contact {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .dark-mode .social-media {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .dark-mode .social-link {
+            background-color: var(--bg-alt);
+            border-color: var(--primary-color);
+        }
+
+        .dark-mode footer {
+            background-color: var(--bg-alt);
+        }
+
+        .about {
+            background-color: var(--bg-alt);
+            padding: 3rem;
+            border-radius: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .about p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(236, 72, 153, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .project-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .project-card p {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .project-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-card a:hover {
+            text-decoration: underline;
+        }
+
+        .contact {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .contact-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-links a:hover {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+
+        .social-media {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.75rem;
+            background-color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.1);
+        }
+
+        .social-link:hover {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.3);
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        footer {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        footer p {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .about {
+                padding: 2rem;
+            }
+
+            .projects {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-modal-content {
+                padding: 1rem;
+                max-width: 95%;
+            }
+
+            .theme-modal-content h2 {
+                font-size: 1.25rem;
+            }
+
+            .theme-grid {
+                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+                gap: 0.5rem;
+            }
+
+            .theme-name {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="rippleCanvas"></canvas>
+    <div id="cursorBall"></div>
+    
+    <!-- Theme Selection Modal -->
+    <div id="themeModal">
+        <div class="theme-modal-content">
+            <h2>Choose Your Theme</h2>
+            <p>Select a color theme for your visit</p>
+            
+            <!-- Pagination -->
+            <div class="theme-pagination">
+                <button class="theme-page-btn active" data-page="1">Page 1</button>
+                <button class="theme-page-btn" data-page="2">Page 2</button>
+            </div>
+            
+            <!-- Page 1: Regular Themes -->
+            <div class="theme-page active" data-page="1">
+                <div class="theme-grid">
+                <div class="theme-option" data-theme="light-blue" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%);">
+                    <span class="theme-name">Light Blue</span>
+                </div>
+                <div class="theme-option" data-theme="dark-blue" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1e3a8a 100%);">
+                    <span class="theme-name">Dark Blue</span>
+                </div>
+                <div class="theme-option" data-theme="pink" style="background: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #fbcfe8 100%);">
+                    <span class="theme-name">Pink</span>
+                </div>
+                <div class="theme-option" data-theme="light-red" style="background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #fca5a5 100%);">
+                    <span class="theme-name">Light Red</span>
+                </div>
+                <div class="theme-option" data-theme="violet" style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #c4b5fd 100%);">
+                    <span class="theme-name">Violet</span>
+                </div>
+                <div class="theme-option" data-theme="green" style="background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #6ee7b7 100%);">
+                    <span class="theme-name">Green</span>
+                </div>
+                <div class="theme-option" data-theme="yellow" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fde047 100%);">
+                    <span class="theme-name">Yellow</span>
+                </div>
+                <div class="theme-option" data-theme="white-beta" style="background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 50%, #e5e5e5 100%); border: 2px solid #000;">
+                    <span class="theme-name">White [BETA]</span>
+                </div>
+                <div class="theme-option" data-theme="black-beta" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #333333 100%);">
+                    <span class="theme-name">Black [BETA]</span>
+                </div>
+                <div class="theme-option" data-theme="rainbow" style="background: linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%);">
+                    <span class="theme-name">Rainbow</span>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Page 2: Unlocked Themes -->
+            <div class="theme-page" data-page="2">
+                <div class="theme-grid" id="unlockedThemesGrid">
+                    <p style="grid-column: 1 / -1; color: #6b7280; padding: 2rem;">No unlocked themes yet. Enter a key below to unlock special KiraThemes™!</p>
+                </div>
+            </div>
+            
+            <!-- Key Input Section -->
+            <div class="theme-unlock-section">
+                <p>If you want to use special KiraThemes™, enter the key below:</p>
+                <div class="theme-key-input">
+                    <input type="text" id="themeKeyInput" placeholder="Enter unlock key..." />
+                    <button id="themeKeySubmit">Unlock</button>
+                </div>
+                <div class="theme-key-message" id="themeKeyMessage"></div>
+            </div>
+        </div>
+    </div>
+    
+    <header>
+        <div class="header-buttons">
+            <button class="theme-button" id="lightDarkBtn">Light</button>
+            <button class="theme-button" id="changeThemeBtn">Change Theme</button>
+        </div>
+        <div class="container">
+            <h1>Kirakira</h1>
+            <p>developer... maybe?</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Achievements</a></li>
+                <li><a href="#social">Social</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="/chat/">Chat</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="about">
+            <h2>About</h2>
+            <div class="about">
+                <p>
+                    Hi! I'm kirakira, who mainly focuses on Python when I'm coding some simple calc script and some C++ when involving Splatoon 3 modding. For ASM, I only know some very basic ARMv8 opcodes (Nintendo Switch uses ARMv8) so unfortunately, I can't make patches all by myself ;-;
+                </p>
+                <p>
+                    Anyways, look at some of my achievements!
+                </p>
+            </div>
+        </section>
+
+        <section id="projects">
+            <h2>Achievements</h2>
+            <div class="projects">
+                <div class="project-card">
+                    <h3>KirunaNX</h3>
+                    <p>A functional Splatoon 3 mod menu with a nice and smooth design plus a functioning patcher. 50/50 online safe.</p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        KirunaNX is based on GLOSHSEP's s3_imgui_base, thanks for that. An old version that is public for a template purpose, as KirunaNX has become private.
+                    </p>
+                    <a href="https://github.com/kirakira-dev/KirunaNX-ARCHIVED" target="_blank" rel="noopener noreferrer">
+                        View on GitHub →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="social">
+            <div class="social-media">
+                <h2>Connect With Me</h2>
+                <p>Follow me on social media to stay updated with my latest projects and updates!</p>
+                <div class="social-links">
+                    <a href="https://github.com/kirakira-dev" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://x.com/@its_kirakira" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        X (Twitter)
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="contact">
+                <h2>Get in Touch</h2>
+                <p>Feel free to reach out if you'd like to collaborate or just say hello!</p>
+                <div class="contact-links">
+                    <a href="mailto:kirakira@its-kirakira.com">
+                        Email
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Kirakira. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Management
+        const themes = {
+            'light-blue': {
+                primary: '#60a5fa',
+                secondary: '#3b82f6',
+                text: '#1e3a8a',
+                textLight: '#1e40af',
+                bg: '#eff6ff',
+                bgAlt: '#dbeafe',
+                border: '#93c5fd'
+            },
+            'dark-blue': {
+                primary: '#2563eb',
+                secondary: '#1e40af',
+                text: '#ffffff',
+                textLight: '#e0e7ff',
+                bg: '#1e3a8a',
+                bgAlt: '#1e40af',
+                border: '#3b82f6'
+            },
+            'pink': {
+                primary: '#ec4899',
+                secondary: '#f472b6',
+                text: '#831843',
+                textLight: '#9f1239',
+                bg: '#fdf2f8',
+                bgAlt: '#fce7f3',
+                border: '#fbcfe8'
+            },
+            'light-red': {
+                primary: '#f87171',
+                secondary: '#ef4444',
+                text: '#991b1b',
+                textLight: '#b91c1c',
+                bg: '#fef2f2',
+                bgAlt: '#fee2e2',
+                border: '#fca5a5'
+            },
+            'violet': {
+                primary: '#a78bfa',
+                secondary: '#8b5cf6',
+                text: '#5b21b6',
+                textLight: '#6d28d9',
+                bg: '#f5f3ff',
+                bgAlt: '#ede9fe',
+                border: '#c4b5fd'
+            },
+            'green': {
+                primary: '#34d399',
+                secondary: '#10b981',
+                text: '#065f46',
+                textLight: '#047857',
+                bg: '#ecfdf5',
+                bgAlt: '#d1fae5',
+                border: '#6ee7b7'
+            },
+            'yellow': {
+                primary: '#fbbf24',
+                secondary: '#f59e0b',
+                text: '#78350f',
+                textLight: '#92400e',
+                bg: '#fffbeb',
+                bgAlt: '#fef3c7',
+                border: '#fde047'
+            },
+            'white-beta': {
+                primary: '#000000',
+                secondary: '#333333',
+                text: '#000000',
+                textLight: '#666666',
+                bg: '#ffffff',
+                bgAlt: '#f5f5f5',
+                border: '#e5e5e5'
+            },
+            'black-beta': {
+                primary: '#ffffff',
+                secondary: '#cccccc',
+                text: '#ffffff',
+                textLight: '#e5e5e5',
+                bg: '#000000',
+                bgAlt: '#1a1a1a',
+                border: '#333333'
+            },
+            'rainbow': {
+                primary: '#ff0080',
+                secondary: '#00ff80',
+                text: '#4a0080',
+                textLight: '#6a0090',
+                bg: '#fff5ff',
+                bgAlt: '#ffe5ff',
+                border: '#ff80ff'
+            }
+        };
+
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+            
+            document.documentElement.style.setProperty('--primary-color', theme.primary);
+            document.documentElement.style.setProperty('--secondary-color', theme.secondary);
+            document.documentElement.style.setProperty('--text-color', theme.text);
+            document.documentElement.style.setProperty('--text-light', theme.textLight);
+            document.documentElement.style.setProperty('--bg-color', theme.bg);
+            document.documentElement.style.setProperty('--bg-alt', theme.bgAlt);
+            document.documentElement.style.setProperty('--border-color', theme.border);
+            
+            // Special rainbow gradient for header
+            if (themeName === 'rainbow') {
+                const header = document.querySelector('header');
+                if (header) {
+                    header.style.background = 'linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%)';
+                }
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.style.background = 'linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%)';
+                }
+            } else {
+                // Reset to use CSS variables for other themes
+                const header = document.querySelector('header');
+                if (header) {
+                    header.style.background = '';
+                }
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.style.background = '';
+                }
+            }
+            
+            // Ripple colors will be updated automatically via getRippleColors()
+        }
+
+        function showThemeModal() {
+            const modal = document.getElementById('themeModal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function hideThemeModal() {
+            const modal = document.getElementById('themeModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Check if theme is already selected
+        const savedTheme = localStorage.getItem('websiteTheme');
+        if (savedTheme && themes[savedTheme]) {
+            applyTheme(savedTheme);
+        } else {
+            // Show modal on first visit
+            setTimeout(() => {
+                showThemeModal();
+            }, 100);
+        }
+
+        // Unlocked themes storage
+        let unlockedThemes = JSON.parse(localStorage.getItem('unlockedThemes') || '[]');
+        let themePasswords = {}; // Will store key -> theme mapping
+
+        // Fetch and parse theme unlock passwords
+        async function loadThemePasswords() {
+            try {
+                // Try multiple possible paths
+                let response = await fetch('./theme-unlock-passwords.txt');
+                if (!response.ok) {
+                    response = await fetch('/theme-unlock-passwords.txt');
+                }
+                if (!response.ok) {
+                    response = await fetch('theme-unlock-passwords.txt');
+                }
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch passwords file:', response.status);
+                    return;
+                }
+                
+                const text = await response.text();
+                const lines = text.split('\n').filter(line => line.trim());
+                
+                // Parse format: key=theme-name
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine || trimmedLine.startsWith('#')) return; // Skip empty lines and comments
+                    
+                    const [key, themeName] = trimmedLine.split('=').map(s => s.trim());
+                    if (key && themeName) {
+                        // Store both lowercase and original case for case-insensitive lookup
+                        themePasswords[key.toLowerCase()] = themeName;
+                        themePasswords[key] = themeName; // Also store original case
+                    }
+                });
+                console.log('Loaded theme passwords:', Object.keys(themePasswords));
+            } catch (error) {
+                console.error('Failed to load theme passwords:', error);
+            }
+        }
+
+        // Load passwords on page load
+        loadThemePasswords();
+
+        // Special KiraThemes (unlockable themes)
+        const kiraThemes = {
+            // Add special unlockable themes here
+        };
+
+        // Function to add unlocked theme to page 2 (global scope)
+        window.addUnlockedTheme = function(themeName, themeData) {
+            const grid = document.getElementById('unlockedThemesGrid');
+            if (!grid) return;
+
+            // Remove placeholder message if exists
+            const placeholder = grid.querySelector('p');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // Check if theme already exists
+            if (grid.querySelector(`[data-theme="${themeName}"]`)) {
+                return;
+            }
+
+            // Create theme option
+            const themeOption = document.createElement('div');
+            themeOption.className = 'theme-option';
+            themeOption.setAttribute('data-theme', themeName);
+            
+            // Create gradient background
+            const gradient = `linear-gradient(135deg, ${themeData.primary} 0%, ${themeData.secondary} 50%, ${themeData.border} 100%)`;
+            themeOption.style.background = gradient;
+            
+            const themeNameSpan = document.createElement('span');
+            themeNameSpan.className = 'theme-name';
+            themeNameSpan.textContent = themeData.displayName || themeName;
+            
+            themeOption.appendChild(themeNameSpan);
+            grid.appendChild(themeOption);
+
+            // Add click handler (will be set up by setupThemeSelection)
+            // The click handler is added in setupThemeSelection for consistency
+        };
+        
+        // Override to ensure theme selection works for dynamically added themes
+        const originalAddUnlockedTheme = window.addUnlockedTheme;
+        window.addUnlockedTheme = function(themeName, themeData) {
+            originalAddUnlockedTheme(themeName, themeData);
+            // Re-setup theme selection to include new theme
+            const newOption = document.querySelector(`[data-theme="${themeName}"]`);
+            if (newOption) {
+                newOption.addEventListener('click', function() {
+                    const allOptions = document.querySelectorAll('.theme-option');
+                    allOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    applyTheme(themeName);
+                    localStorage.setItem('websiteTheme', themeName);
+                    
+                    setTimeout(() => {
+                        hideThemeModal();
+                    }, 500);
+                });
+            }
+        };
+
+        // Function to render unlocked themes
+        function renderUnlockedThemes() {
+            unlockedThemes.forEach(themeName => {
+                if (kiraThemes[themeName]) {
+                    window.addUnlockedTheme(themeName, kiraThemes[themeName]);
+                }
+            });
+        }
+
+        // Pagination handlers
+        function setupPagination() {
+            const pageButtons = document.querySelectorAll('.theme-page-btn');
+            const pages = document.querySelectorAll('.theme-page');
+
+            pageButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetPage = this.getAttribute('data-page');
+                    
+                    // Update button states
+                    pageButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update page visibility
+                    pages.forEach(page => {
+                        if (page.getAttribute('data-page') === targetPage) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        // Key validation and unlocking
+        function validateAndUnlockTheme(key) {
+            const trimmedKey = key.trim();
+            
+            if (!trimmedKey) {
+                return { success: false, message: 'Please enter a key' };
+            }
+
+            // Check if key exists in passwords (case-insensitive)
+            const themeName = themePasswords[trimmedKey] || themePasswords[trimmedKey.toLowerCase()];
+            
+            if (!themeName) {
+                console.log('Key not found. Available keys:', Object.keys(themePasswords));
+                console.log('Searched for:', trimmedKey, 'and', trimmedKey.toLowerCase());
+                return { success: false, message: 'Invalid key' };
+            }
+
+            // Check if theme is already unlocked
+            if (unlockedThemes.includes(themeName)) {
+                return { success: false, message: 'Theme already unlocked' };
+            }
+
+            // Check if theme exists in kiraThemes
+            if (!kiraThemes[themeName]) {
+                return { success: false, message: 'Theme not found' };
+            }
+
+            // Unlock theme
+            unlockedThemes.push(themeName);
+            localStorage.setItem('unlockedThemes', JSON.stringify(unlockedThemes));
+            
+            // Add to page 2
+            window.addUnlockedTheme(themeName, kiraThemes[themeName]);
+            
+            return { success: true, message: 'Theme unlocked successfully!' };
+        }
+
+        // Theme selection handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeOptions = document.querySelectorAll('.theme-option');
+            const changeThemeBtn = document.getElementById('changeThemeBtn');
+            const keyInput = document.getElementById('themeKeyInput');
+            const keySubmit = document.getElementById('themeKeySubmit');
+            const keyMessage = document.getElementById('themeKeyMessage');
+
+            // Setup pagination
+            setupPagination();
+
+            // Render unlocked themes
+            renderUnlockedThemes();
+
+            // Key submission handler
+            if (keySubmit && keyInput) {
+                keySubmit.addEventListener('click', async function() {
+                    // Reload passwords in case file was updated
+                    await loadThemePasswords();
+                    
+                    // Debug: log what we're checking
+                    console.log('Validating key:', keyInput.value);
+                    console.log('Available passwords:', themePasswords);
+                    
+                    const result = validateAndUnlockTheme(keyInput.value);
+                    
+                    keyMessage.textContent = result.message;
+                    keyMessage.className = 'theme-key-message ' + (result.success ? 'success' : 'error');
+                    
+                    if (result.success) {
+                        keyInput.value = '';
+                        // Switch to page 2 to show unlocked theme
+                        const page2Btn = document.querySelector('.theme-page-btn[data-page="2"]');
+                        if (page2Btn) {
+                            page2Btn.click();
+                        }
+                    }
+                });
+
+                // Allow Enter key to submit
+                keyInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        keySubmit.click();
+                    }
+                });
+            }
+            
+            // Change theme button handler
+            if (changeThemeBtn) {
+                changeThemeBtn.addEventListener('click', function() {
+                    // Mark current theme as selected
+                    const currentTheme = localStorage.getItem('websiteTheme') || 'pink';
+                    const allThemeOptions = document.querySelectorAll('.theme-option');
+                    allThemeOptions.forEach(opt => {
+                        if (opt.getAttribute('data-theme') === currentTheme) {
+                            opt.classList.add('selected');
+                            // Switch to appropriate page if needed
+                            const themePage = opt.closest('.theme-page');
+                            if (themePage) {
+                                const pageNum = themePage.getAttribute('data-page');
+                                const pageBtn = document.querySelector(`.theme-page-btn[data-page="${pageNum}"]`);
+                                if (pageBtn) {
+                                    pageBtn.click();
+                                }
+                            }
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                    
+                    // Show modal
+                    showThemeModal();
+                });
+            }
+
+            // Light/Dark mode switcher
+            const lightDarkBtn = document.getElementById('lightDarkBtn');
+            const savedMode = localStorage.getItem('colorMode') || 'light';
+            
+            function applyColorMode(mode) {
+                if (mode === 'dark') {
+                    document.documentElement.classList.add('dark-mode');
+                    if (lightDarkBtn) {
+                        lightDarkBtn.textContent = 'Dark';
+                    }
+                } else {
+                    document.documentElement.classList.remove('dark-mode');
+                    if (lightDarkBtn) {
+                        lightDarkBtn.textContent = 'Light';
+                    }
+                }
+                localStorage.setItem('colorMode', mode);
+            }
+            
+            // Apply saved mode on load
+            applyColorMode(savedMode);
+            
+            // Toggle on button click
+            if (lightDarkBtn) {
+                lightDarkBtn.addEventListener('click', function() {
+                    const currentMode = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+                    const newMode = currentMode === 'light' ? 'dark' : 'light';
+                    applyColorMode(newMode);
+                });
+            }
+            
+            // Theme selection handler (works for both regular and unlocked themes)
+            function setupThemeSelection() {
+                const allThemeOptions = document.querySelectorAll('.theme-option');
+                allThemeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const themeName = this.getAttribute('data-theme');
+                        
+                        // Remove selected class from all options
+                        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
+                        
+                        // Add selected class to clicked option
+                        this.classList.add('selected');
+                        
+                        // Apply theme
+                        applyTheme(themeName);
+                        
+                        // Save to localStorage
+                        localStorage.setItem('websiteTheme', themeName);
+                        
+                        // Hide modal after a short delay
+                        setTimeout(() => {
+                            hideThemeModal();
+                        }, 500);
+                    });
+                });
+            }
+            
+            // Setup initial theme selection
+            setupThemeSelection();
+        });
+
+        // Smooth Pink Water Ripple Effect
+        const canvas = document.getElementById('rippleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Load lense and mask images
+        const lenseImg = new Image();
+        const maskImg = new Image();
+        let lenseLoaded = false;
+        let maskLoaded = false;
+        
+        lenseImg.onload = () => {
+            lenseLoaded = true;
+        };
+        maskImg.onload = () => {
+            maskLoaded = true;
+        };
+        
+        lenseImg.src = 'lense.png';
+        maskImg.src = 'mask.png';
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Color palette for ripples (will be updated based on theme)
+        function getRippleColors() {
+            // Check if rainbow theme is active
+            const currentTheme = localStorage.getItem('websiteTheme') || 'pink';
+            if (currentTheme === 'rainbow') {
+                // Full rainbow color palette
+                return [
+                    { r: 255, g: 0, b: 0 },       // Red
+                    { r: 255, g: 128, b: 0 },    // Orange
+                    { r: 255, g: 255, b: 0 },    // Yellow
+                    { r: 128, g: 255, b: 0 },    // Yellow-green
+                    { r: 0, g: 255, b: 128 },    // Green
+                    { r: 0, g: 128, b: 255 },    // Blue
+                    { r: 128, g: 0, b: 255 },    // Indigo
+                    { r: 255, g: 0, b: 128 }     // Magenta/Pink
+                ];
+            }
+            
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const secondary = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+            const border = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+            
+            // Parse hex colors
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 236, g: 72, b: 153 };
+            }
+            
+            const primaryRgb = hexToRgb(primary);
+            const secondaryRgb = hexToRgb(secondary);
+            const borderRgb = hexToRgb(border);
+            
+            return [
+                primaryRgb,
+                secondaryRgb,
+                { r: Math.min(255, primaryRgb.r + 20), g: Math.min(255, primaryRgb.g + 20), b: Math.min(255, primaryRgb.b + 20) },
+                { r: Math.min(255, secondaryRgb.r + 20), g: Math.min(255, secondaryRgb.g + 20), b: Math.min(255, secondaryRgb.b + 20) },
+                { r: Math.max(0, primaryRgb.r - 20), g: Math.max(0, primaryRgb.g - 20), b: Math.max(0, primaryRgb.b - 20) },
+                { r: Math.max(0, secondaryRgb.r - 20), g: Math.max(0, secondaryRgb.g - 20), b: Math.max(0, secondaryRgb.b - 20) },
+                borderRgb,
+                { r: Math.min(255, borderRgb.r + 30), g: Math.min(255, borderRgb.g + 30), b: Math.min(255, borderRgb.b + 30) }
+            ];
+        }
+        
+        let pinkColors = getRippleColors();
+        
+        // Ripple class
+        class Ripple {
+            constructor(x, y, useLense = false) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = useLense ? Math.random() * 150 + 200 : Math.random() * 100 + 140;
+                this.speed = Math.random() * 0.4 + 1.0; // More consistent, smoother speed
+                this.opacity = 1;
+                const colors = getRippleColors();
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.life = 1;
+                this.fadeSpeed = useLense ? 0.008 : 0.010; // Faster fade for shorter lifetime
+                this.startTime = performance.now();
+                this.useLense = useLense;
+            }
+            
+            update() {
+                // Smooth radius growth with easing
+                const progress = this.radius / this.maxRadius;
+                const easedProgress = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+                this.radius += this.speed * (1 + easedProgress * 0.3);
+                
+                this.life -= this.fadeSpeed;
+                // Ultra-smooth easing for opacity (ease-out cubic)
+                const t = Math.max(0, this.life);
+                this.opacity = t * t * (3 - 2 * t); // Smoothstep function
+                
+                return this.life > 0 && this.radius < this.maxRadius;
+            }
+            
+            draw() {
+                if (this.useLense && lenseLoaded && maskLoaded) {
+                    // Use lense and mask images for distortion effect
+                    const size = this.radius * 2;
+                    const halfSize = size / 2;
+                    
+                    // Save context
+                    ctx.save();
+                    
+                    // Create clipping path
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.clip();
+                    
+                    // Draw mask as alpha mask
+                    ctx.globalAlpha = this.opacity * 0.6;
+                    ctx.drawImage(maskImg, this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    // Draw lense with color overlay
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.globalAlpha = this.opacity * 0.4;
+                    ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.5)`;
+                    ctx.fillRect(this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = this.opacity * 0.5;
+                    ctx.drawImage(lenseImg, this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    // Restore context
+                    ctx.restore();
+                } else {
+                    // Regular gradient ripple
+                    const gradient = ctx.createRadialGradient(
+                        this.x, this.y, 0,
+                        this.x, this.y, this.radius
+                    );
+                    
+                    // Ultra-smooth gradient with many color stops
+                    gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.75})`);
+                    gradient.addColorStop(0.2, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.6})`);
+                    gradient.addColorStop(0.4, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.4})`);
+                    gradient.addColorStop(0.6, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.25})`);
+                    gradient.addColorStop(0.75, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.15})`);
+                    gradient.addColorStop(0.9, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.05})`);
+                    gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    // Ultra-smooth outer ring with gradient
+                    const ringGradient = ctx.createRadialGradient(
+                        this.x, this.y, this.radius * 0.9,
+                        this.x, this.y, this.radius
+                    );
+                    ringGradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.2})`);
+                    ringGradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+                    ctx.strokeStyle = ringGradient;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        const ripples = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        let lastRippleTime = 0;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        // Mouse move handler - ultra-smooth, very frequent ripples
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Calculate distance moved for smoother ripple creation
+            const distance = Math.sqrt(
+                Math.pow(mouseX - lastMouseX, 2) + Math.pow(mouseY - lastMouseY, 2)
+            );
+            
+            const now = Date.now();
+            // Create ripples very frequently (every 30ms) for ultra-smooth effect
+            if (now - lastRippleTime > 30) {
+                ripples.push(new Ripple(mouseX, mouseY));
+                lastRippleTime = now;
+            }
+            
+            // Create additional ripples when moving fast for ultra-smooth trail
+            if (distance > 8 && now - lastRippleTime > 15) {
+                ripples.push(new Ripple(
+                    mouseX + (Math.random() - 0.5) * 15,
+                    mouseY + (Math.random() - 0.5) * 15
+                ));
+            }
+            
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+        });
+        
+        // Touch support for mobile - smoother
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+            
+            const now = Date.now();
+            if (now - lastRippleTime > 40) {
+                ripples.push(new Ripple(mouseX, mouseY));
+                lastRippleTime = now;
+            }
+        });
+        
+        // Click handler for lense/mask ripples
+        document.addEventListener('click', (e) => {
+            // Create single ripple with lense and mask
+            ripples.push(new Ripple(e.clientX, e.clientY, true));
+        });
+        
+        // Animation loop with ultra-smooth rendering
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Clear canvas with transparent background (no white fade)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw ripples with smooth interpolation
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                if (ripples[i].update()) {
+                    ripples[i].draw();
+                } else {
+                    ripples.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Simple pink ball cursor
+        const cursorBall = document.getElementById('cursorBall');
+        
+        // Mouse move handler - simple position update
+        document.addEventListener('mousemove', (e) => {
+            cursorBall.style.left = e.clientX + 'px';
+            cursorBall.style.top = e.clientY + 'px';
+        });
+        
+        // Touch handler
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            cursorBall.style.left = touch.clientX + 'px';
+            cursorBall.style.top = touch.clientY + 'px';
+        });
+        
+        // Initialize cursor position
+        cursorBall.style.left = window.innerWidth / 2 + 'px';
+        cursorBall.style.top = window.innerHeight / 2 + 'px';
+        
+        // Hover effect on interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, input, textarea, select');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorBall.style.transform = 'translate(-50%, -50%) scale(1.5)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorBall.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
+

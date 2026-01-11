@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Chat | Kirakira</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #ec4899;
+            --secondary-color: #f472b6;
+            --text-color: #831843;
+            --bg-color: #fdf2f8;
+            --border-color: #fbcfe8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-container h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .login-container p {
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Welcome to Chat</h1>
+        <p>Please login with your username and password</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <div class="error-message" id="errorMessage">Invalid username or password</div>
+            
+            <button type="submit" class="login-button">Login</button>
+        </form>
+        
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+
+    <script>
+        // Check if already logged in
+        if (sessionStorage.getItem('chatLoggedIn') === 'true') {
+            window.location.href = '/chat/welcome';
+        }
+
+        // Load credentials
+        let credentials = {};
+
+        async function loadCredentials() {
+            // Try multiple possible paths
+            const paths = [
+                '/chat-credentials.txt',
+                '../chat-credentials.txt',
+                './chat-credentials.txt',
+                '/chat/chat-credentials.txt'
+            ];
+            
+            let loaded = false;
+            for (const path of paths) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const text = await response.text();
+                        const lines = text.split('\n').filter(line => line.trim());
+                        
+                        lines.forEach(line => {
+                            const trimmedLine = line.trim();
+                            if (!trimmedLine || trimmedLine.startsWith('#')) return;
+                            
+                            const [username, password] = trimmedLine.split('=').map(s => s.trim());
+                            if (username && password) {
+                                credentials[username.toLowerCase()] = password;
+                            }
+                        });
+                        loaded = true;
+                        console.log('Credentials loaded successfully from:', path);
+                        break;
+                    }
+                } catch (error) {
+                    console.log('Failed to load from:', path, error);
+                    continue;
+                }
+            }
+            
+            if (!loaded) {
+                console.error('Failed to load credentials from all paths');
+                // Don't show alert, just log error - allow user to try logging in anyway
+                // The form submission will handle the error
+            }
+        }
+
+        // Load credentials on page load
+        loadCredentials();
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Reload credentials in case file was updated
+            await loadCredentials();
+            
+            // Check if credentials were loaded
+            if (Object.keys(credentials).length === 0) {
+                errorMessage.textContent = 'Error: Could not load credentials file. Please check server configuration.';
+                errorMessage.classList.add('show');
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                }, 5000);
+                return;
+            }
+            
+            // Check credentials
+            if (credentials[username.toLowerCase()] === password) {
+                // Store login state
+                sessionStorage.setItem('chatLoggedIn', 'true');
+                sessionStorage.setItem('chatUsername', username);
+                
+                // Redirect to welcome page
+                window.location.href = '/chat/welcome';
+            } else {
+                errorMessage.textContent = 'Invalid username or password';
+                errorMessage.classList.add('show');
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
+

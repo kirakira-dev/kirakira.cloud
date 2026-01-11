@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Chat | Kirakira</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #ec4899;
+            --secondary-color: #f472b6;
+            --text-color: #831843;
+            --bg-color: #fdf2f8;
+            --border-color: #fbcfe8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .welcome-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .welcome-container h1 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .welcome-container p {
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .chat-button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: fadeInUp 0.6s ease 0.4s both;
+        }
+
+        .chat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+
+        .chat-button:active {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Confetti canvas */
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confettiCanvas"></canvas>
+    
+    <div class="welcome-container">
+        <h1>🎉 Welcome!</h1>
+        <p>You've successfully logged in! Ready to start chatting?</p>
+        <button class="chat-button" onclick="window.location.href='/chat/chat.html'">Take me to the Chat</button>
+    </div>
+
+    <script>
+        // Check if logged in
+        if (sessionStorage.getItem('chatLoggedIn') !== 'true') {
+            window.location.href = '/chat/';
+        }
+
+        // Confetti animation
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Confetti {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -10;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = Math.random() * 3 + 2;
+                this.size = Math.random() * 8 + 4;
+                this.color = this.getRandomColor();
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+            }
+
+            getRandomColor() {
+                const colors = [
+                    '#ec4899', '#f472b6', '#fbcfe8',
+                    '#60a5fa', '#3b82f6', '#93c5fd',
+                    '#34d399', '#10b981', '#6ee7b7',
+                    '#fbbf24', '#f59e0b', '#fde047',
+                    '#a78bfa', '#8b5cf6', '#c4b5fd'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                this.vy += 0.1; // gravity
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+
+            isOffScreen() {
+                return this.y > canvas.height + 10;
+            }
+        }
+
+        const confetti = [];
+        
+        // Create initial burst
+        function createBurst() {
+            for (let i = 0; i < 100; i++) {
+                confetti.push(new Confetti());
+            }
+        }
+
+        // Create bursts periodically
+        createBurst();
+        setTimeout(createBurst, 300);
+        setTimeout(createBurst, 600);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Add occasional new confetti
+            if (Math.random() < 0.1) {
+                confetti.push(new Confetti());
+            }
+            
+            for (let i = confetti.length - 1; i >= 0; i--) {
+                confetti[i].update();
+                confetti[i].draw();
+                
+                if (confetti[i].isOffScreen()) {
+                    confetti.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
