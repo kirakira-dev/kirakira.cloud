@@ -224,12 +224,9 @@
 
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
-        // Try Netlify function directly first, fallback to API path
-        const API_URL = '/.netlify/functions/chat-messages';
-        
-        let lastMessageId = null;
-        let displayedMessageIds = new Set();
-
+        // Chat API functionality has been removed
+        // Messages are now stored locally only
+        let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
         // Format timestamp
         function formatTimestamp(timestamp) {
             const date = new Date(timestamp);
