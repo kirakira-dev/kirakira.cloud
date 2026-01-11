@@ -274,12 +274,6 @@
         }
 
         // Load messages from API
-        async function loadMessages() {
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error('Failed to load messages');
-                }
                 const data = await response.json();
                 if (data.success && data.messages) {
                     // Add new messages
@@ -299,17 +293,6 @@
         }
 
         // Send message to API
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            try {
-                console.log('Sending message to:', API_URL);
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         username: username,
                         text: message
@@ -364,7 +347,6 @@
         loadMessages();
 
         // Poll for new messages every 2 seconds
-        setInterval(loadMessages, 2000);
 
         // Focus input on load
         messageInput.focus();
