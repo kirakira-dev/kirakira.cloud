@@ -402,50 +402,57 @@
             display: inline-block;
         }
 
-        /* Dark Mode Styles */
+        /* Dark Mode Styles - Google-style black background */
         .dark-mode {
-            --bg-color: #1a1a1a;
-            --bg-alt: #2a2a2a;
+            --bg-color: #000000;
+            --bg-alt: #000000;
             --text-color: #e5e5e5;
             --text-light: #d5d5d5;
             --border-color: #404040;
         }
 
+        /* Make entire screen black */
+        .dark-mode,
+        .dark-mode html,
         .dark-mode body {
-            background-color: var(--bg-color);
+            background-color: #000000 !important;
         }
 
         .dark-mode nav {
-            background-color: rgba(26, 26, 26, 0.95) !important;
+            background-color: rgba(0, 0, 0, 0.95) !important;
         }
 
         .dark-mode main {
-            background-color: var(--bg-color);
+            background-color: #000000 !important;
         }
 
         .dark-mode .about {
-            background-color: var(--bg-alt);
+            background-color: #000000 !important;
         }
 
         .dark-mode .project-card {
-            background-color: var(--bg-alt);
+            background-color: #000000 !important;
         }
 
         .dark-mode .contact {
-            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            background: #000000 !important;
         }
 
         .dark-mode .social-media {
-            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            background: #000000 !important;
         }
 
         .dark-mode .social-link {
-            background-color: var(--bg-alt);
+            background-color: #000000 !important;
             border-color: var(--primary-color);
         }
 
         .dark-mode footer {
-            background-color: var(--bg-alt);
+            background-color: #000000 !important;
+        }
+
+        .dark-mode header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%) !important;
         }
 
         .about {
