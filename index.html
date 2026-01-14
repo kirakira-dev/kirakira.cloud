@@ -49,12 +49,14 @@
 
         #cursorBall {
             position: fixed;
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             pointer-events: none;
             z-index: 99999;
             transform: translate(-50%, -50%);
             opacity: 1;
+            transition: width 0.3s ease, height 0.3s ease;
+            mix-blend-mode: difference;
         }
 
         #cursorBall::before {
@@ -63,7 +65,89 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: var(--primary-color);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        #cursorBall.hover {
+            width: 60px;
+            height: 60px;
+        }
+
+        #cursorBall.hover::before {
+            border: 2px solid white;
+            background: transparent;
+        }
+
+        /* Liquid Glass Cursor */
+        #liquid-glass-cursor {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            transition: all 0.15s ease-out;
+            mix-blend-mode: normal;
+        }
+
+        #liquid-glass-cursor::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(10px);
+        }
+
+        /* SVG filter for glass distortion */
+        #glass-filter {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .japanese-overlay {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            white-space: pre;
+            line-height: inherit;
+        }
+
+        /* Japanese text layer */
+        .japanese-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100%;
+            pointer-events: none;
+            z-index: 100000;
+            clip-path: circle(0px at 0px 0px);
+            transition: clip-path 0.05s linear;
+            filter: url(#glass-distortion);
+        }
+
+        .japanese-layer * {
+            pointer-events: none !important;
+        }
+
+        body.japanese-ready .japanese-layer {
+            display: block;
         }
 
         /* Theme Selection Modal */
@@ -402,61 +486,50 @@
             display: inline-block;
         }
 
-        /* Dark Mode Styles - Google-style black background */
+        /* Dark Mode Styles */
         .dark-mode {
-            --bg-color: #000000;
-            --bg-alt: #000000;
+            --bg-color: #1a1a1a;
+            --bg-alt: #2a2a2a;
             --text-color: #e5e5e5;
             --text-light: #d5d5d5;
             --border-color: #404040;
         }
 
-        /* Make entire screen black */
-        .dark-mode,
-        .dark-mode html,
         .dark-mode body {
-            background-color: #000000 !important;
+            background-color: var(--bg-color);
         }
 
         .dark-mode nav {
-            background-color: rgba(0, 0, 0, 0.95) !important;
+            background-color: rgba(26, 26, 26, 0.95) !important;
         }
 
         .dark-mode main {
-            background-color: #000000 !important;
+            background-color: var(--bg-color);
         }
 
         .dark-mode .about {
-            background-color: #0a0a0a !important;
-            border: 1px solid var(--border-color) !important;
+            background-color: var(--bg-alt);
         }
 
         .dark-mode .project-card {
-            background-color: #0a0a0a !important;
-            border: 1px solid var(--border-color) !important;
+            background-color: var(--bg-alt);
         }
 
         .dark-mode .contact {
-            background: #0a0a0a !important;
-            border: 1px solid var(--border-color) !important;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
         }
 
         .dark-mode .social-media {
-            background: #0a0a0a !important;
-            border: 1px solid var(--border-color) !important;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
         }
 
         .dark-mode .social-link {
-            background-color: #0a0a0a !important;
-            border-color: var(--primary-color) !important;
+            background-color: var(--bg-alt);
+            border-color: var(--primary-color);
         }
 
         .dark-mode footer {
-            background-color: #000000 !important;
-        }
-
-        .dark-mode header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%) !important;
+            background-color: var(--bg-alt);
         }
 
         .about {
@@ -659,8 +732,40 @@
     </style>
 </head>
 <body>
+    <!-- SVG filter for glass distortion effect -->
+    <svg id="glass-filter" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="glass-distortion" x="-50%" y="-50%" width="200%" height="200%">
+                <!-- Create displacement map for glass refraction -->
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" seed="2" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="displacement" />
+                
+                <!-- Add slight blur for realism -->
+                <feGaussianBlur in="displacement" stdDeviation="0.5" result="blur" />
+                
+                <!-- Enhance the effect at edges -->
+                <feComponentTransfer in="blur" result="contrast">
+                    <feFuncR type="linear" slope="1.2" intercept="0" />
+                    <feFuncG type="linear" slope="1.2" intercept="0" />
+                    <feFuncB type="linear" slope="1.2" intercept="0" />
+                </feComponentTransfer>
+                
+                <!-- Merge with original for subtle effect -->
+                <feBlend in="contrast" in2="SourceGraphic" mode="normal" result="blend" />
+            </filter>
+            
+            <!-- Alternative lighter distortion -->
+            <filter id="glass-distortion-light" x="-50%" y="-50%" width="200%" height="200%">
+                <feTurbulence type="turbulence" baseFrequency="0.02 0.02" numOctaves="2" result="turbulence" seed="5" />
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="5" xChannelSelector="R" yChannelSelector="G" result="displace" />
+                <feGaussianBlur in="displace" stdDeviation="0.3" />
+            </filter>
+        </defs>
+    </svg>
+    
     <canvas id="rippleCanvas"></canvas>
     <div id="cursorBall"></div>
+    <div id="liquid-glass-cursor"></div>
     
     <!-- Theme Selection Modal -->
     <div id="themeModal">
@@ -747,6 +852,7 @@
                 <li><a href="#projects">Achievements</a></li>
                 <li><a href="#social">Social</a></li>
                 <li><a href="#contact">Contact</a></li>
+                <li><a href="/chat/">Chat</a></li>
             </ul>
         </div>
     </nav>
@@ -1468,53 +1574,29 @@
         }
         
         const ripples = [];
-        let mouseX = 0;
-        let mouseY = 0;
         let lastRippleTime = 0;
         let lastMouseX = 0;
         let lastMouseY = 0;
         
-        // Mouse move handler - ultra-smooth, very frequent ripples
+        // Consolidated mouse move handler - handles cursor only (ripples disabled)
         document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            // Update cursor target positions
+            targetX = e.clientX;
+            targetY = e.clientY;
             
-            // Calculate distance moved for smoother ripple creation
-            const distance = Math.sqrt(
-                Math.pow(mouseX - lastMouseX, 2) + Math.pow(mouseY - lastMouseY, 2)
-            );
-            
-            const now = Date.now();
-            // Create ripples very frequently (every 30ms) for ultra-smooth effect
-            if (now - lastRippleTime > 30) {
-                ripples.push(new Ripple(mouseX, mouseY));
-                lastRippleTime = now;
-            }
-            
-            // Create additional ripples when moving fast for ultra-smooth trail
-            if (distance > 8 && now - lastRippleTime > 15) {
-                ripples.push(new Ripple(
-                    mouseX + (Math.random() - 0.5) * 15,
-                    mouseY + (Math.random() - 0.5) * 15
-                ));
-            }
-            
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
+            // Ripple trail disabled
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
         });
         
-        // Touch support for mobile - smoother
+        // Touch support for mobile
         document.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const touch = e.touches[0];
-            mouseX = touch.clientX;
-            mouseY = touch.clientY;
             
-            const now = Date.now();
-            if (now - lastRippleTime > 40) {
-                ripples.push(new Ripple(mouseX, mouseY));
-                lastRippleTime = now;
-            }
+            // Update cursor positions
+            targetX = touch.clientX;
+            targetY = touch.clientY;
         });
         
         // Click handler for lense/mask ripples
@@ -1547,35 +1629,442 @@
         // Start animation
         animate();
         
-        // Simple pink ball cursor
-        const cursorBall = document.getElementById('cursorBall');
+        // Translation dictionary
+        const translations = {
+            // Header
+            'Kirakira': 'きらきら',
+            'developer': '開発者',
+            'maybe': 'たぶん',
+            'Light': 'ライト',
+            'Dark': 'ダーク',
+            'Change': '変更',
+            'Theme': 'テーマ',
+            
+            // Navigation
+            'About': 'について',
+            'Achievements': '実績',
+            'Social': 'ソーシャル',
+            'Contact': 'コンタクト',
+            'Chat': 'チャット',
+            
+            // About Section - complete sentences
+            'Hi': 'こんにちは',
+            "I'm": '私は',
+            'kirakira': 'きらきら',
+            'who': 'です',
+            'mainly': '主に',
+            'focuses': 'フォーカスして',
+            'Python': 'パイソン',
+            "I'm": 'います',
+            'when': 'とき',
+            'coding': 'コーディング',
+            'some': 'いくつかの',
+            'simple': 'シンプルな',
+            'calc': '計算',
+            'script': 'スクリプト',
+            'C++': 'C++',
+            'involving': '含む',
+            'Splatoon': 'スプラトゥーン',
+            '3': '3',
+            'modding': '改造',
+            'For': 'ために',
+            'ASM': 'アセンブリ',
+            'I': '私',
+            'only': 'だけ',
+            'know': '知っています',
+            'very': 'とても',
+            'basic': '基本的な',
+            'ARMv8': 'ARMv8',
+            'opcodes': 'オペコード',
+            'Nintendo': '任天堂',
+            'Switch': 'スイッチ',
+            'uses': '使用',
+            'so': 'なので',
+            'unfortunately': '残念ながら',
+            'can': 'できません',
+            "can't": 'できません',
+            'make': '作る',
+            'patches': 'パッチ',
+            'all': 'すべて',
+            'by': 'によって',
+            'myself': '自分自身',
+            ';-;': ';-;',
+            'Anyways': 'とにかく',
+            'look': '見て',
+            'at': 'ください',
+            'my': '私の',
+            'achievements': '実績',
+            'of': 'の',
+            
+            // Project Card
+            'KirunaNX': 'キルナNX',
+            'A': '一つの',
+            'functional': '機能的な',
+            'mod': 'モッド',
+            'menu': 'メニュー',
+            'with': 'と',
+            'a': '',
+            'nice': '良い',
+            'and': 'と',
+            'smooth': 'スムーズな',
+            'design': 'デザイン',
+            'plus': 'プラス',
+            'functioning': '機能する',
+            'patcher': 'パッチャー',
+            '50/50': '50/50',
+            'online': 'オンライン',
+            'safe': '安全',
+            'is': 'は',
+            'based': 'ベースにした',
+            'on': 'に',
+            "GLOSHSEP's": 'GLOSHSEPの',
+            's3_imgui_base': 's3_imgui_base',
+            'thanks': 'ありがとう',
+            'for': 'ために',
+            'that': 'それ',
+            'An': '一つの',
+            'old': '古い',
+            'version': 'バージョン',
+            'that': 'が',
+            'public': '公開',
+            'template': 'テンプレート',
+            'purpose': '目的',
+            'as': 'として',
+            'has': 'なった',
+            'become': 'なる',
+            'private': 'プライベート',
+            'View': 'ビュー',
+            'GitHub': 'ギットハブ',
+            '→': '→',
+            
+            // Social Section
+            'Connect': '接続',
+            'With': 'と',
+            'Me': '私',
+            'Follow': 'フォローして',
+            'me': '私',
+            'social': 'ソーシャル',
+            'media': 'メディア',
+            'to': 'へ',
+            'stay': 'いてください',
+            'updated': '更新',
+            'latest': '最新',
+            'projects': 'プロジェクト',
+            'updates': 'アップデート',
+            'X': 'X',
+            'Twitter': 'ツイッター',
+            
+            // Contact Section
+            'Get': 'お問い合わせ',
+            'in': '',
+            'Touch': 'ください',
+            'Feel': '気軽に',
+            'free': '',
+            'reach': '連絡',
+            'out': 'して',
+            'if': 'もし',
+            'you': 'あなた',
+            "you'd": 'あなたが',
+            'would': 'したい',
+            'like': 'なら',
+            'collaborate': 'コラボレート',
+            'or': 'または',
+            'just': 'ただ',
+            'say': '言う',
+            'hello': 'こんにちは',
+            'Email': 'メール',
+            
+            // Footer
+            '©': '©',
+            '2024': '2024',
+            'All': 'すべて',
+            'rights': '権利',
+            'reserved': '予約済み',
+            
+            // Theme Modal
+            'Choose': '選択',
+            'Your': 'あなたの',
+            'Select': '選択',
+            'color': 'カラー',
+            'theme': 'テーマ',
+            'your': 'あなたの',
+            'visit': '訪問',
+            'Page': 'ページ',
+            '1': '1',
+            '2': '2',
+            'Blue': 'ブルー',
+            'Pink': 'ピンク',
+            'Red': 'レッド',
+            'Violet': 'バイオレット',
+            'Green': 'グリーン',
+            'Yellow': 'イエロー',
+            'White': 'ホワイト',
+            'Black': 'ブラック',
+            '[BETA]': '[ベータ]',
+            'Rainbow': 'レインボー',
+            'No': 'いいえ',
+            'unlocked': 'アンロック済み',
+            'themes': 'テーマ',
+            'yet': 'まだ',
+            'Enter': '入力',
+            'key': 'キー',
+            'below': '以下',
+            'unlock': 'アンロック',
+            'special': '特別',
+            'KiraThemes™': 'キラテーマ™',
+            'want': '希望',
+            'use': '使用',
+            'enter': '入力',
+            'the': '',
+            'Unlock': 'アンロック',
+            'placeholder': 'プレースホルダー'
+        };
+
+        // Function to translate text content
+        function translateText(text) {
+            // Complete paragraph translations
+            const paragraphTranslations = {
+                "Hi! I'm kirakira, who mainly focuses on Python when I'm coding some simple calc script and some C++ when involving Splatoon 3 modding. For ASM, I only know some very basic ARMv8 opcodes (Nintendo Switch uses ARMv8) so unfortunately, I can't make patches all by myself ;-;": "こんにちは！私はきらきらです。主にPythonでシンプルな計算スクリプトをコーディングしたり、スプラトゥーン3の改造に関わるときC++を使ったりします。ASMに関しては、とても基本的なARMv8オペコードしか知りません（Nintendo SwitchはARMv8を使用）。なので残念ながら、自分でパッチを作ることができません ;-;",
+                "Anyways, look at some of my achievements!": "とにかく、私の実績を見てください！",
+                "A functional Splatoon 3 mod menu with a nice and smooth design plus a functioning patcher. 50/50 online safe.": "機能的なスプラトゥーン3モッドメニュー。美しくスムーズなデザインと機能するパッチャー付き。50/50オンライン安全。",
+                "KirunaNX is based on GLOSHSEP's s3_imgui_base, thanks for that. An old version that is public for a template purpose, as KirunaNX has become private.": "KirunaNXはGLOSHSEPのs3_imgui_baseをベースにしています。ありがとうございます。テンプレート目的で公開されている古いバージョンですが、KirunaNXはプライベートになりました。",
+                "Follow me on social media to stay updated with my latest projects and updates!": "私の最新プロジェクトやアップデートをフォローしてください！",
+                "Feel free to reach out if you'd like to collaborate or just say hello!": "コラボレーションや挨拶をしたい方はお気軽にお問い合わせください！",
+                "Select a color theme for your visit": "あなたの訪問のためのカラーテーマを選択してください",
+                "No unlocked themes yet. Enter a key below to unlock special KiraThemes™!": "まだアンロックされたテーマはありません。特別なキラテーマ™をアンロックするには以下にキーを入力してください！",
+                "If you want to use special KiraThemes™, enter the key below:": "特別なキラテーマ™を使用したい場合は、以下にキーを入力してください：",
+                "Enter unlock key...": "アンロックキーを入力..."
+            };
+            
+            // Try exact paragraph match first
+            if (paragraphTranslations[text]) {
+                return paragraphTranslations[text];
+            }
+            
+            // Special handling for common phrases
+            const specialPhrases = {
+                "Hi! I'm kirakira": "こんにちは!私はきらきらです",
+                "I'm kirakira": "私はきらきらです",
+                "I'm": "私は",
+                "I'm coding": "私はコーディング",
+                "who mainly": "主に",
+                "can't make": "作れません",
+                "can't": "できません",
+                "you'd like": "したいなら"
+            };
+            
+            // Try exact phrase match
+            if (specialPhrases[text]) {
+                return specialPhrases[text];
+            }
+            
+            // Try exact match in main dictionary
+            if (translations[text]) {
+                return translations[text];
+            }
+            
+            // Try case-insensitive match
+            const lowerText = text.toLowerCase();
+            for (const [key, value] of Object.entries(translations)) {
+                if (key.toLowerCase() === lowerText) {
+                    return value;
+                }
+            }
+            
+            // Handle contractions by splitting on apostrophe
+            if (text.includes("'")) {
+                const parts = text.split("'");
+                let translated = '';
+                parts.forEach((part, index) => {
+                    const partKey = index === 0 ? part : "'" + part;
+                    const found = translations[partKey] || translations[part] || part;
+                    translated += found;
+                });
+                if (translated !== text) {
+                    return translated;
+                }
+            }
+            
+            // Try word by word translation
+            const words = text.split(/\s+/);
+            const translatedWords = words.map(word => {
+                // Check for exact match first (including punctuation)
+                if (translations[word]) {
+                    return translations[word];
+                }
+                
+                // Clean word and try again
+                const cleanWord = word.replace(/[^a-zA-Z0-9']/g, '');
+                
+                // Check if it's a contraction
+                if (cleanWord.includes("'")) {
+                    const parts = cleanWord.split("'");
+                    const firstPart = translations[parts[0]] || parts[0];
+                    const secondPart = translations["'" + parts[1]] || translations[parts[1]] || parts[1];
+                    return firstPart + secondPart;
+                }
+                
+                for (const [key, value] of Object.entries(translations)) {
+                    if (key.toLowerCase() === cleanWord.toLowerCase()) {
+                        return value;
+                    }
+                }
+                return word;
+            });
+            
+            const result = translatedWords.join('');
+            return result !== text ? result : text;
+        }
+
+        // Create Japanese layer with enhanced glass effect
+        function createJapaneseLayer() {
+            const japaneseLayer = document.createElement('div');
+            japaneseLayer.className = 'japanese-layer';
+            japaneseLayer.id = 'japanese-layer';
+            
+            // Clone the entire body content
+            const bodyClone = document.body.cloneNode(true);
+            
+            // Remove scripts, canvas, cursors, SVG filters from clone
+            bodyClone.querySelectorAll('script, #rippleCanvas, #cursorBall, #liquid-glass-cursor, .japanese-layer, #glass-filter').forEach(el => el.remove());
+            
+            // Walk through all text nodes and translate
+            const walker = document.createTreeWalker(
+                bodyClone,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.nodeValue.trim()) {
+                    textNodes.push(node);
+                }
+            }
+            
+            textNodes.forEach(textNode => {
+                const translated = translateText(textNode.nodeValue.trim());
+                if (translated !== textNode.nodeValue.trim()) {
+                    textNode.nodeValue = translated;
+                }
+            });
+            
+            japaneseLayer.appendChild(bodyClone);
+            document.body.appendChild(japaneseLayer);
+            
+            return japaneseLayer;
+        }
+
+        // Initialize Japanese layer after DOM is ready
+        let japaneseLayer = null;
         
-        // Mouse move handler - simple position update
-        document.addEventListener('mousemove', (e) => {
-            cursorBall.style.left = e.clientX + 'px';
-            cursorBall.style.top = e.clientY + 'px';
+        // Wait for all content to load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                japaneseLayer = createJapaneseLayer();
+                document.body.classList.add('japanese-ready');
+            }, 100);
         });
+
+        // Magnetic cursor with smooth following
+        const cursorBall = document.getElementById('cursorBall');
+        const liquidGlass = document.getElementById('liquid-glass-cursor');
+        let cursorX = 0;
+        let cursorY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let glassX = 0;
+        let glassY = 0;
+        let magnetTarget = null;
+        let currentOverlays = [];
+        
+        // Smooth cursor animation
+        function animateCursor() {
+            if (magnetTarget) {
+                const rect = magnetTarget.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // Magnetic pull
+                targetX += (centerX - targetX) * 0.15;
+                targetY += (centerY - targetY) * 0.15;
+            }
+            
+            cursorX += (targetX - cursorX) * 0.15;
+            cursorY += (targetY - cursorY) * 0.15;
+            
+            // Glass follows with slight delay
+            glassX += (targetX - glassX) * 0.1;
+            glassY += (targetY - glassY) * 0.1;
+            
+            cursorBall.style.left = cursorX + 'px';
+            cursorBall.style.top = cursorY + 'px';
+            
+            liquidGlass.style.left = glassX + 'px';
+            liquidGlass.style.top = glassY + 'px';
+            
+            // Update Japanese layer clip-path with distortion effect
+            if (japaneseLayer) {
+                const radius = 100; // Half of the liquid glass circle size
+                
+                // Account for scroll position
+                const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                
+                // Adjust glass position for scroll
+                const adjustedX = glassX + scrollX;
+                const adjustedY = glassY + scrollY;
+                
+                const mainCircle = `circle(${radius}px at ${adjustedX}px ${adjustedY}px)`;
+                
+                japaneseLayer.style.clipPath = mainCircle;
+            }
+            
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+        // (Removed individual character overlay system - using layer mask instead)
+        
+        // Mouse move handler
+        // (Already handled in ripple section above)
         
         // Touch handler
-        document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            cursorBall.style.left = touch.clientX + 'px';
-            cursorBall.style.top = touch.clientY + 'px';
-        });
+        // (Already handled in ripple section above)
         
         // Initialize cursor position
-        cursorBall.style.left = window.innerWidth / 2 + 'px';
-        cursorBall.style.top = window.innerHeight / 2 + 'px';
+        targetX = cursorX = glassX = window.innerWidth / 2;
+        targetY = cursorY = glassY = window.innerHeight / 2;
         
-        // Hover effect on interactive elements
-        const interactiveElements = document.querySelectorAll('a, button, input, textarea, select');
+        // Magnetic hover effect on interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, input, textarea, select, .project-card, .social-link');
         interactiveElements.forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursorBall.style.transform = 'translate(-50%, -50%) scale(1.5)';
+            el.addEventListener('mouseenter', function() {
+                cursorBall.classList.add('hover');
+                magnetTarget = this;
+                
+                // Add magnetic effect to the element itself
+                this.style.transition = 'transform 0.3s ease';
             });
-            el.addEventListener('mouseleave', () => {
-                cursorBall.style.transform = 'translate(-50%, -50%) scale(1)';
+            
+            el.addEventListener('mousemove', function(e) {
+                if (magnetTarget === this) {
+                    const rect = this.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    
+                    const deltaX = (e.clientX - centerX) * 0.2;
+                    const deltaY = (e.clientY - centerY) * 0.2;
+                    
+                    this.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                }
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                cursorBall.classList.remove('hover');
+                magnetTarget = null;
+                this.style.transform = '';
             });
         });
     </script>
