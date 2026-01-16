@@ -249,6 +249,17 @@
         .back-link:hover {
             text-decoration: underline;
         }
+
+        .status-indicator {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-indicator.local {
+            background: rgba(251, 207, 232, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -296,7 +307,10 @@
         <!-- Chat Section -->
         <div class="chat-container" id="chatContainer">
             <div class="chat-header">
-                <h2>Public Chat</h2>
+                <div>
+                    <h2>Public Chat</h2>
+                    <span class="status-indicator local">Reading from local file</span>
+                </div>
                 <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
             <div class="messages" id="messages"></div>
@@ -308,15 +322,15 @@
     </div>
 
     <script>
-        // API URL - Use same protocol as the page to avoid mixed content issues
-        // If page is HTTPS, use HTTPS; if HTTP, use HTTP
+        // VPS URL for sending messages
         const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-        const API_BASE_URL = `${protocol}//76.13.24.155/api`;
-        const USERS_FILE = `${protocol}//76.13.24.155/users.json`; // File containing user credentials
+        const VPS_API_URL = `${protocol}//76.13.24.155/api`;
         
-        console.log('Current hostname:', window.location.hostname);
-        console.log('Current origin:', window.location.origin);
-        console.log('API Base URL:', API_BASE_URL);
+        // Local file for reading messages
+        const LOCAL_MESSAGES_FILE = './messages.json';
+        
+        console.log('VPS API URL (for sending):', VPS_API_URL);
+        console.log('Local messages file (for reading):', LOCAL_MESSAGES_FILE);
 
         let currentToken = localStorage.getItem('chatToken');
         let currentUsername = localStorage.getItem('chatUsername');
@@ -338,13 +352,13 @@
             return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Load users from file
+        // Load users from local file
         async function loadUsers() {
             try {
-                const response = await fetch(USERS_FILE);
+                const response = await fetch('./users.json');
                 if (response.ok) {
                     usersData = await response.json();
-                    console.log('Loaded users:', usersData.length);
+                    console.log('Loaded users from local file:', usersData.length);
                 } else {
                     console.warn('Could not load users.json, starting with empty list');
                     usersData = [];
@@ -355,19 +369,13 @@
             }
         }
 
-        // Save users to file (via server endpoint)
+        // Save users to local file (via localStorage for demo, ideally via server)
         async function saveUsers() {
+            // For local development, we'll use localStorage as a fallback
+            // In production, you'd want a proper backend endpoint
             try {
-                const response = await fetch(`${API_BASE_URL}/save-users`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(usersData)
-                });
-                if (!response.ok) {
-                    console.error('Failed to save users');
-                }
+                localStorage.setItem('chatUsers', JSON.stringify(usersData));
+                console.log('Saved users to localStorage');
             } catch (error) {
                 console.error('Error saving users:', error);
             }
@@ -508,23 +516,24 @@
             startPolling();
         }
 
-        // Load messages
+        // Load messages from LOCAL file
         async function loadMessages() {
             if (!currentToken) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/messages`, {
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`
-                    }
-                });
+                const response = await fetch(LOCAL_MESSAGES_FILE);
 
                 if (response.ok) {
                     const messages = await response.json();
                     displayMessages(messages);
+                    console.log('Loaded messages from local file');
+                } else {
+                    console.warn('Could not load local messages file');
+                    displayMessages([]);
                 }
             } catch (error) {
-                console.error('Error loading messages:', error);
+                console.error('Error loading messages from local file:', error);
+                displayMessages([]);
             }
         }
 
@@ -532,6 +541,16 @@
         function displayMessages(messages) {
             const messagesEl = document.getElementById('messages');
             messagesEl.innerHTML = '';
+
+            if (messages.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.color = '#9f1239';
+                emptyMsg.style.padding = '2rem';
+                emptyMsg.textContent = 'No messages yet. Be the first to send one!';
+                messagesEl.appendChild(emptyMsg);
+                return;
+            }
 
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
@@ -563,7 +582,7 @@
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        // Send message
+        // Send message to VPS
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -578,7 +597,9 @@
             if (!message || !currentToken) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/messages`, {
+                console.log('Sending message to VPS with token:', currentToken);
+                
+                const response = await fetch(`${VPS_API_URL}/messages`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -589,21 +610,26 @@
 
                 if (response.ok) {
                     input.value = '';
-                    loadMessages();
+                    const data = await response.json();
+                    console.log('Message sent successfully to VPS:', data);
+                    
+                    // Optionally reload messages after a short delay
+                    // to see if the VPS has updated the local file
+                    setTimeout(() => loadMessages(), 500);
                 } else {
                     const data = await response.json();
                     showError(data.error || 'Failed to send message');
                 }
             } catch (error) {
-                showError('Failed to send message');
+                showError('Failed to send message to VPS: ' + error.message);
                 console.error('Send message error:', error);
             }
         }
 
-        // Polling for new messages
+        // Polling for new messages from LOCAL file
         let pollingInterval;
         function startPolling() {
-            pollingInterval = setInterval(loadMessages, 2000); // Poll every 2 seconds
+            pollingInterval = setInterval(loadMessages, 2000); // Poll local file every 2 seconds
         }
 
         function stopPolling() {
@@ -630,4 +656,3 @@
     </script>
 </body>
 </html>
-
