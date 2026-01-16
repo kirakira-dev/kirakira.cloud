@@ -389,10 +389,19 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    showError(`Connection error. Cannot reach server at ${API_BASE_URL}. Please check if the server is running and accessible.`);
+                console.error('Error details:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                });
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
+                    const errorMsg = `Connection error. Cannot reach server at ${API_BASE_URL}. `;
+                    const mixedContentHint = window.location.protocol === 'https:' 
+                        ? 'Note: HTTPS sites cannot access HTTP APIs. The server needs HTTPS or you need to access this page via HTTP.'
+                        : 'Please check if the server is running and accessible.';
+                    showError(errorMsg + mixedContentHint);
                 } else {
-                    showError('Connection error. Please check if the server is running.');
+                    showError('Connection error: ' + error.message);
                 }
             }
         });
@@ -432,10 +441,19 @@
                 }
             } catch (error) {
                 console.error('Signup error:', error);
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    showError(`Connection error. Cannot reach server at ${API_BASE_URL}. Please check if the server is running and accessible.`);
+                console.error('Error details:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                });
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
+                    const errorMsg = `Connection error. Cannot reach server at ${API_BASE_URL}. `;
+                    const mixedContentHint = window.location.protocol === 'https:' 
+                        ? 'Note: HTTPS sites cannot access HTTP APIs. The server needs HTTPS or you need to access this page via HTTP.'
+                        : 'Please check if the server is running and accessible.';
+                    showError(errorMsg + mixedContentHint);
                 } else {
-                    showError('Connection error. Please check if the server is running.');
+                    showError('Connection error: ' + error.message);
                 }
             }
         });
