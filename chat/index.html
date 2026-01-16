@@ -308,10 +308,12 @@
     </div>
 
     <script>
-        // API URL - Update this if your server is on a different domain/port
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3000/api'
-            : `http://76.13.24.155:3000/api`;
+        // API URL - Always use the VPS IP for production
+        const API_BASE_URL = 'http://76.13.24.155:3000/api';
+        
+        console.log('Current hostname:', window.location.hostname);
+        console.log('Current origin:', window.location.origin);
+        console.log('API Base URL:', API_BASE_URL);
 
         let currentToken = localStorage.getItem('chatToken');
         let currentUsername = localStorage.getItem('chatUsername');
@@ -362,15 +364,19 @@
             const password = document.getElementById('loginPassword').value;
 
             try {
+                console.log('Attempting login to:', `${API_BASE_URL}/login`);
                 const response = await fetch(`${API_BASE_URL}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password }),
+                    mode: 'cors'
                 });
 
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (response.ok && data.token) {
                     currentToken = data.token;
@@ -382,8 +388,12 @@
                     showError(data.error || 'Login failed');
                 }
             } catch (error) {
-                showError('Connection error. Please check if the server is running.');
                 console.error('Login error:', error);
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    showError(`Connection error. Cannot reach server at ${API_BASE_URL}. Please check if the server is running and accessible.`);
+                } else {
+                    showError('Connection error. Please check if the server is running.');
+                }
             }
         });
 
@@ -396,15 +406,19 @@
             const password = document.getElementById('signupPassword').value;
 
             try {
+                console.log('Attempting signup to:', `${API_BASE_URL}/signup`);
                 const response = await fetch(`${API_BASE_URL}/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password }),
+                    mode: 'cors'
                 });
 
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (response.ok && data.token) {
                     currentToken = data.token;
@@ -417,8 +431,12 @@
                     showError(data.error || 'Signup failed');
                 }
             } catch (error) {
-                showError('Connection error. Please check if the server is running.');
                 console.error('Signup error:', error);
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    showError(`Connection error. Cannot reach server at ${API_BASE_URL}. Please check if the server is running and accessible.`);
+                } else {
+                    showError('Connection error. Please check if the server is running.');
+                }
             }
         });
 

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const API_BASE_URL = 'http://76.13.24.155:3000/api';
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre style="background: #d1fae5; padding: 1rem; border-radius: 0.5rem;">✅ Success!<br>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<pre style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem;">❌ Error:<br>${error.message}</pre>`;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
+

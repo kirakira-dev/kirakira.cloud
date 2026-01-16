@@ -10,7 +10,16 @@ const PORT = config.port;
 const HOST = config.host;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
 // File paths
@@ -235,6 +244,11 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
+});
+
+// Serve test page
+app.get('/test-api.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-api.html'));
 });
 
 // Start server
