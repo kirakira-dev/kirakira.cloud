@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Yahaha! You found me! Congrats, you just wasted your time :)-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kirakira's website!">
+    <title>Kirakira's Website!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none !important;
+        }
+
+        html, body {
+            cursor: none !important;
+        }
+
+        :root {
+            --primary-color: #ec4899;
+            --secondary-color: #f472b6;
+            --text-color: #831843;
+            --text-light: #9f1239;
+            --bg-color: #fdf2f8;
+            --bg-alt: #fce7f3;
+            --border-color: #fbcfe8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        #rippleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999998;
+        }
+
+        #cursorBall {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            transition: width 0.3s ease, height 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        #cursorBall::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        #cursorBall.hover {
+            width: 60px;
+            height: 60px;
+        }
+
+        #cursorBall.hover::before {
+            border: 2px solid white;
+            background: transparent;
+        }
+
+        /* Liquid Glass Cursor */
+        #liquid-glass-cursor {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            transition: all 0.15s ease-out;
+            mix-blend-mode: normal;
+        }
+
+        #liquid-glass-cursor::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(10px);
+        }
+
+        /* SVG filter for glass distortion */
+        #glass-filter {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .japanese-overlay {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            white-space: pre;
+            line-height: inherit;
+        }
+
+        /* Japanese text layer */
+        .japanese-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100%;
+            pointer-events: none;
+            z-index: 100000;
+            clip-path: circle(0px at 0px 0px);
+            transition: clip-path 0.05s linear;
+            filter: url(#glass-distortion);
+        }
+
+        .japanese-layer * {
+            pointer-events: none !important;
+        }
+
+        body.japanese-ready .japanese-layer {
+            display: block;
+        }
+
+        /* Style Selection Modal */
+        #styleModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            cursor: auto !important;
+        }
+        
+        #styleModal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        #styleModal * {
+            cursor: auto !important;
+        }
+        
+        .style-modal-content {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            padding: 3rem;
+            border-radius: 2rem;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(236, 72, 153, 0.3);
+        }
+        
+        .style-modal-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #fbcfe8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .style-modal-content p {
+            color: #831843;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .style-options {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .style-option {
+            flex: 1;
+            min-width: 200px;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.2);
+        }
+        
+        .style-option:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: #ec4899;
+            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+        }
+        
+        .style-option h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #ec4899;
+        }
+        
+        .style-option p {
+            color: #831843;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        /* Theme Selection Modal */
+        #themeModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            cursor: auto !important;
+        }
+        
+        #themeModal * {
+            cursor: auto !important;
+        }
+        
+        #themeModal .theme-option,
+        #themeModal button,
+        #themeModal input {
+            cursor: pointer !important;
+        }
+
+        #themeModal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .theme-modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .theme-modal-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .theme-modal-content p {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .theme-option {
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .theme-option.selected {
+            border-color: #000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-option::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-option.selected::after {
+            opacity: 1;
+        }
+
+        .theme-name {
+            position: absolute;
+            bottom: 0.25rem;
+            left: 0;
+            right: 0;
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            padding: 0 0.25rem;
+        }
+
+        .theme-unlock-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .theme-unlock-section p {
+            color: #6b7280;
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-key-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-key-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .theme-key-input input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .theme-key-input button {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .theme-key-input button:hover {
+            background: var(--secondary-color);
+        }
+
+        .theme-key-message {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            min-height: 1rem;
+        }
+
+        .theme-key-message.success {
+            color: #10b981;
+        }
+
+        .theme-key-message.error {
+            color: #ef4444;
+        }
+
+        .theme-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-page-btn {
+            padding: 0.4rem 0.75rem;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .theme-page-btn:hover:not(.active) {
+            background: #e5e7eb;
+        }
+
+        .theme-page {
+            display: none;
+        }
+
+        .theme-page.active {
+            display: block;
+        }
+
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--border-color) 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-buttons {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.75rem;
+            z-index: 100;
+        }
+        
+        .change-ui-style-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .change-ui-style-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .header-buttons {
+                top: 1rem;
+                right: 1rem;
+                gap: 0.5rem;
+            }
+            .theme-button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        nav {
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(253, 242, 248, 0.95);
+            position: relative;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+            background-color: rgba(244, 114, 182, 0.2);
+        }
+
+        main {
+            padding: 4rem 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        section h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Dark Mode Styles */
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --bg-alt: #2a2a2a;
+            --text-color: #e5e5e5;
+            --text-light: #d5d5d5;
+            --border-color: #404040;
+        }
+
+        .dark-mode body {
+            background-color: var(--bg-color);
+        }
+
+        .dark-mode nav {
+            background-color: rgba(26, 26, 26, 0.95) !important;
+        }
+
+        .dark-mode main {
+            background-color: var(--bg-color);
+        }
+
+        .dark-mode .about {
+            background-color: var(--bg-alt);
+        }
+
+        .dark-mode .project-card {
+            background-color: var(--bg-alt);
+        }
+
+        .dark-mode .contact {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .dark-mode .social-media {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .dark-mode .social-link {
+            background-color: var(--bg-alt);
+            border-color: var(--primary-color);
+        }
+
+        .dark-mode footer {
+            background-color: var(--bg-alt);
+        }
+
+        .about {
+            background-color: var(--bg-alt);
+            padding: 3rem;
+            border-radius: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .about p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(236, 72, 153, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .project-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .project-card p {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .project-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-card a:hover {
+            text-decoration: underline;
+        }
+
+        .contact {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .contact-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-links a:hover {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+
+        .social-media {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.75rem;
+            background-color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.1);
+        }
+
+        .social-link:hover {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.3);
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        footer {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        footer p {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .about {
+                padding: 2rem;
+            }
+
+            .projects {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-modal-content {
+                padding: 1rem;
+                max-width: 95%;
+            }
+
+            .theme-modal-content h2 {
+                font-size: 1.25rem;
+            }
+
+            .theme-grid {
+                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+                gap: 0.5rem;
+            }
+
+            .theme-name {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG filter for glass distortion effect -->
+    <svg id="glass-filter" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="glass-distortion" x="-50%" y="-50%" width="200%" height="200%">
+                <!-- Create displacement map for glass refraction -->
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" seed="2" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="displacement" />
+                
+                <!-- Add slight blur for realism -->
+                <feGaussianBlur in="displacement" stdDeviation="0.5" result="blur" />
+                
+                <!-- Enhance the effect at edges -->
+                <feComponentTransfer in="blur" result="contrast">
+                    <feFuncR type="linear" slope="1.2" intercept="0" />
+                    <feFuncG type="linear" slope="1.2" intercept="0" />
+                    <feFuncB type="linear" slope="1.2" intercept="0" />
+                </feComponentTransfer>
+                
+                <!-- Merge with original for subtle effect -->
+                <feBlend in="contrast" in2="SourceGraphic" mode="normal" result="blend" />
+            </filter>
+            
+            <!-- Alternative lighter distortion -->
+            <filter id="glass-distortion-light" x="-50%" y="-50%" width="200%" height="200%">
+                <feTurbulence type="turbulence" baseFrequency="0.02 0.02" numOctaves="2" result="turbulence" seed="5" />
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="5" xChannelSelector="R" yChannelSelector="G" result="displace" />
+                <feGaussianBlur in="displace" stdDeviation="0.3" />
+            </filter>
+        </defs>
+    </svg>
+    
+    <canvas id="rippleCanvas"></canvas>
+    <div id="cursorBall"></div>
+    <div id="liquid-glass-cursor"></div>
+    
+    <!-- Theme Selection Modal -->
+    <div id="themeModal">
+        <div class="theme-modal-content">
+            <h2>Choose Your Theme</h2>
+            <p>Select a color theme for your visit</p>
+            
+            <!-- Pagination -->
+            <div class="theme-pagination">
+                <button class="theme-page-btn active" data-page="1">Page 1</button>
+                <button class="theme-page-btn" data-page="2">Page 2</button>
+            </div>
+            
+            <!-- Page 1: Regular Themes -->
+            <div class="theme-page active" data-page="1">
+                <div class="theme-grid">
+                <div class="theme-option" data-theme="light-blue" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%);">
+                    <span class="theme-name">Light Blue</span>
+                </div>
+                <div class="theme-option" data-theme="dark-blue" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1e3a8a 100%);">
+                    <span class="theme-name">Dark Blue</span>
+                </div>
+                <div class="theme-option" data-theme="pink" style="background: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #fbcfe8 100%);">
+                    <span class="theme-name">Pink</span>
+                </div>
+                <div class="theme-option" data-theme="light-red" style="background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #fca5a5 100%);">
+                    <span class="theme-name">Light Red</span>
+                </div>
+                <div class="theme-option" data-theme="violet" style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #c4b5fd 100%);">
+                    <span class="theme-name">Violet</span>
+                </div>
+                <div class="theme-option" data-theme="green" style="background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #6ee7b7 100%);">
+                    <span class="theme-name">Green</span>
+                </div>
+                <div class="theme-option" data-theme="yellow" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fde047 100%);">
+                    <span class="theme-name">Yellow</span>
+                </div>
+                <div class="theme-option" data-theme="white-beta" style="background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 50%, #e5e5e5 100%); border: 2px solid #000;">
+                    <span class="theme-name">White [BETA]</span>
+                </div>
+                <div class="theme-option" data-theme="black-beta" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #333333 100%);">
+                    <span class="theme-name">Black [BETA]</span>
+                </div>
+                <div class="theme-option" data-theme="rainbow" style="background: linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%);">
+                    <span class="theme-name">Rainbow</span>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Page 2: Unlocked Themes -->
+            <div class="theme-page" data-page="2">
+                <div class="theme-grid" id="unlockedThemesGrid">
+                    <p style="grid-column: 1 / -1; color: #6b7280; padding: 2rem;">No unlocked themes yet. Enter a key below to unlock special KiraThemes™!</p>
+                </div>
+            </div>
+            
+            <!-- Key Input Section -->
+            <div class="theme-unlock-section">
+                <p>If you want to use special KiraThemes™, enter the key below:</p>
+                <div class="theme-key-input">
+                    <input type="text" id="themeKeyInput" placeholder="Enter unlock key..." />
+                    <button id="themeKeySubmit">Unlock</button>
+                </div>
+                <div class="theme-key-message" id="themeKeyMessage"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Style Selection Modal -->
+    <div id="styleModal">
+        <div class="style-modal-content">
+            <h2>Choose Your Style</h2>
+            <p>Select your preferred UI style</p>
+            <div class="style-options">
+                <div class="style-option" data-style="classic">
+                    <h3>Classic</h3>
+                    <p>The original design with customizable themes</p>
+                </div>
+                <div class="style-option" data-style="new">
+                    <h3>New</h3>
+                    <p>A beautiful pink-themed experience</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <header>
+        <div class="header-buttons">
+            <button class="change-ui-style-button" id="changeUIStyleBtn">Change UI Style</button>
+            <button class="theme-button" id="lightDarkBtn">Light</button>
+            <button class="theme-button" id="changeThemeBtn">Change Theme</button>
+        </div>
+        <div class="container">
+            <h1>Kirakira</h1>
+            <p>developer... maybe?</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Achievements</a></li>
+                <li><a href="#social">Social</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="/chat/">Chat</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="about">
+            <h2>About</h2>
+            <div class="about">
+                <p>
+                    Hi! im kirakira, a splatoon modder who is currently working on a mod menu :3
+                </p>
+                <p>
+                    check the project template in my achieivements category! :D
+                </p>
+            </div>
+        </section>
+
+        <section id="projects">
+            <h2>Achievements</h2>
+            <div class="projects">
+                <div class="project-card">
+                    <h3>KirunaNX</h3>
+                    <p>A functional Splatoon 3 mod menu with a nice and smooth design plus a functioning patcher. 50/50 online safe.</p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        KirunaNX is based on GLOSHSEP's s3_imgui_base, thanks for that. An old version that is public for a template purpose, as KirunaNX has become private.
+                    </p>
+                    <a href="https://github.com/kirakira-dev/KirunaNX-ARCHIVED" target="_blank" rel="noopener noreferrer">
+                        View on GitHub →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="social">
+            <div class="social-media">
+                <h2>Connect With Me</h2>
+                <p>Follow me on social media to stay updated with my latest projects and updates!</p>
+                <div class="social-links">
+                    <a href="https://github.com/kirakira-dev" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://x.com/@its_kirakira" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        X (Twitter)
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="contact">
+                <h2>Get in Touch</h2>
+                <p>Feel free to reach out if you'd like to collaborate or just say hello!</p>
+                <div class="contact-links">
+                    <a href="mailto:kirakira@its-kirakira.com">
+                        Email
+                    </a>
+                    <a href="#" id="discordCopy" onclick="return false;">
+                        Discord: 0xkirakira
+                    </a>
+                </div>
+                <div id="copyNotification" style="display: none; margin-top: 1rem; color: var(--primary-color); font-weight: 600;">Username copied!</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Kirakira. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Management
+        const themes = {
+            'light-blue': {
+                primary: '#60a5fa',
+                secondary: '#3b82f6',
+                text: '#1e3a8a',
+                textLight: '#1e40af',
+                bg: '#eff6ff',
+                bgAlt: '#dbeafe',
+                border: '#93c5fd'
+            },
+            'dark-blue': {
+                primary: '#2563eb',
+                secondary: '#1e40af',
+                text: '#ffffff',
+                textLight: '#e0e7ff',
+                bg: '#1e3a8a',
+                bgAlt: '#1e40af',
+                border: '#3b82f6'
+            },
+            'pink': {
+                primary: '#ec4899',
+                secondary: '#f472b6',
+                text: '#831843',
+                textLight: '#9f1239',
+                bg: '#fdf2f8',
+                bgAlt: '#fce7f3',
+                border: '#fbcfe8'
+            },
+            'light-red': {
+                primary: '#f87171',
+                secondary: '#ef4444',
+                text: '#991b1b',
+                textLight: '#b91c1c',
+                bg: '#fef2f2',
+                bgAlt: '#fee2e2',
+                border: '#fca5a5'
+            },
+            'violet': {
+                primary: '#a78bfa',
+                secondary: '#8b5cf6',
+                text: '#5b21b6',
+                textLight: '#6d28d9',
+                bg: '#f5f3ff',
+                bgAlt: '#ede9fe',
+                border: '#c4b5fd'
+            },
+            'green': {
+                primary: '#34d399',
+                secondary: '#10b981',
+                text: '#065f46',
+                textLight: '#047857',
+                bg: '#ecfdf5',
+                bgAlt: '#d1fae5',
+                border: '#6ee7b7'
+            },
+            'yellow': {
+                primary: '#fbbf24',
+                secondary: '#f59e0b',
+                text: '#78350f',
+                textLight: '#92400e',
+                bg: '#fffbeb',
+                bgAlt: '#fef3c7',
+                border: '#fde047'
+            },
+            'white-beta': {
+                primary: '#000000',
+                secondary: '#333333',
+                text: '#000000',
+                textLight: '#666666',
+                bg: '#ffffff',
+                bgAlt: '#f5f5f5',
+                border: '#e5e5e5'
+            },
+            'black-beta': {
+                primary: '#ffffff',
+                secondary: '#cccccc',
+                text: '#ffffff',
+                textLight: '#e5e5e5',
+                bg: '#000000',
+                bgAlt: '#1a1a1a',
+                border: '#333333'
+            },
+            'rainbow': {
+                primary: '#ff0080',
+                secondary: '#00ff80',
+                text: '#4a0080',
+                textLight: '#6a0090',
+                bg: '#fff5ff',
+                bgAlt: '#ffe5ff',
+                border: '#ff80ff'
+            }
+        };
+
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+            
+            document.documentElement.style.setProperty('--primary-color', theme.primary);
+            document.documentElement.style.setProperty('--secondary-color', theme.secondary);
+            document.documentElement.style.setProperty('--text-color', theme.text);
+            document.documentElement.style.setProperty('--text-light', theme.textLight);
+            document.documentElement.style.setProperty('--bg-color', theme.bg);
+            document.documentElement.style.setProperty('--bg-alt', theme.bgAlt);
+            document.documentElement.style.setProperty('--border-color', theme.border);
+            
+            // Special rainbow gradient for header
+            if (themeName === 'rainbow') {
+                const header = document.querySelector('header');
+                if (header) {
+                    header.style.background = 'linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%)';
+                }
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.style.background = 'linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #80ff00 42%, #00ff80 57%, #0080ff 71%, #8000ff 85%, #ff0080 100%)';
+                }
+            } else {
+                // Reset to use CSS variables for other themes
+                const header = document.querySelector('header');
+                if (header) {
+                    header.style.background = '';
+                }
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.style.background = '';
+                }
+            }
+            
+            // Ripple colors will be updated automatically via getRippleColors()
+        }
+
+        function showThemeModal() {
+            const modal = document.getElementById('themeModal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function hideThemeModal() {
+            const modal = document.getElementById('themeModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Style selection handlers
+        function showStyleModal() {
+            const modal = document.getElementById('styleModal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function hideStyleModal() {
+            const modal = document.getElementById('styleModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function redirectToStyle(style) {
+            if (style === 'new') {
+                window.location.href = 'new.html';
+            } else {
+                // Already on classic page
+                hideStyleModal();
+            }
+        }
+
+        // Check if style is already selected
+        const savedStyle = localStorage.getItem('uiStyle');
+        if (!savedStyle) {
+            // Show style selection modal on first visit
+            setTimeout(() => {
+                showStyleModal();
+            }, 100);
+        } else if (savedStyle === 'new' && !window.location.pathname.includes('new.html')) {
+            // Redirect to new page if new style was selected and we're not already there
+            window.location.href = 'new.html';
+        }
+
+        // Discord username copy functionality
+        function copyDiscordUsername() {
+            const username = '0xkirakira';
+            navigator.clipboard.writeText(username).then(() => {
+                const notification = document.getElementById('copyNotification');
+                if (notification) {
+                    notification.style.display = 'block';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy username:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = username;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const notification = document.getElementById('copyNotification');
+                    if (notification) {
+                        notification.style.display = 'block';
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // Style selection handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const styleOptions = document.querySelectorAll('.style-option');
+            styleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const style = this.getAttribute('data-style');
+                    localStorage.setItem('uiStyle', style);
+                    redirectToStyle(style);
+                });
+            });
+
+            // Change UI Style button handler
+            const changeUIStyleBtn = document.getElementById('changeUIStyleBtn');
+            if (changeUIStyleBtn) {
+                changeUIStyleBtn.addEventListener('click', function() {
+                    showStyleModal();
+                });
+            }
+
+            // Discord copy handler
+            const discordCopy = document.getElementById('discordCopy');
+            if (discordCopy) {
+                discordCopy.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    copyDiscordUsername();
+                });
+            }
+        });
+
+        // Check if theme is already selected
+        const savedTheme = localStorage.getItem('websiteTheme');
+        if (savedTheme && themes[savedTheme]) {
+            applyTheme(savedTheme);
+        } else {
+            // Show theme modal only if style is already selected
+            if (savedStyle) {
+                // Don't auto-show theme modal, user can click button
+            }
+        }
+
+        // Unlocked themes storage
+        let unlockedThemes = JSON.parse(localStorage.getItem('unlockedThemes') || '[]');
+        let themePasswords = {}; // Will store key -> theme mapping
+
+        // Fetch and parse theme unlock passwords
+        async function loadThemePasswords() {
+            try {
+                // Try multiple possible paths
+                let response = await fetch('./theme-unlock-passwords.txt');
+                if (!response.ok) {
+                    response = await fetch('/theme-unlock-passwords.txt');
+                }
+                if (!response.ok) {
+                    response = await fetch('theme-unlock-passwords.txt');
+                }
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch passwords file:', response.status);
+                    return;
+                }
+                
+                const text = await response.text();
+                const lines = text.split('\n').filter(line => line.trim());
+                
+                // Parse format: key=theme-name
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine || trimmedLine.startsWith('#')) return; // Skip empty lines and comments
+                    
+                    const [key, themeName] = trimmedLine.split('=').map(s => s.trim());
+                    if (key && themeName) {
+                        // Store both lowercase and original case for case-insensitive lookup
+                        themePasswords[key.toLowerCase()] = themeName;
+                        themePasswords[key] = themeName; // Also store original case
+                    }
+                });
+                console.log('Loaded theme passwords:', Object.keys(themePasswords));
+            } catch (error) {
+                console.error('Failed to load theme passwords:', error);
+            }
+        }
+
+        // Load passwords on page load
+        loadThemePasswords();
+
+        // Special KiraThemes (unlockable themes)
+        const kiraThemes = {
+            // Add special unlockable themes here
+        };
+
+        // Function to add unlocked theme to page 2 (global scope)
+        window.addUnlockedTheme = function(themeName, themeData) {
+            const grid = document.getElementById('unlockedThemesGrid');
+            if (!grid) return;
+
+            // Remove placeholder message if exists
+            const placeholder = grid.querySelector('p');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // Check if theme already exists
+            if (grid.querySelector(`[data-theme="${themeName}"]`)) {
+                return;
+            }
+
+            // Create theme option
+            const themeOption = document.createElement('div');
+            themeOption.className = 'theme-option';
+            themeOption.setAttribute('data-theme', themeName);
+            
+            // Create gradient background
+            const gradient = `linear-gradient(135deg, ${themeData.primary} 0%, ${themeData.secondary} 50%, ${themeData.border} 100%)`;
+            themeOption.style.background = gradient;
+            
+            const themeNameSpan = document.createElement('span');
+            themeNameSpan.className = 'theme-name';
+            themeNameSpan.textContent = themeData.displayName || themeName;
+            
+            themeOption.appendChild(themeNameSpan);
+            grid.appendChild(themeOption);
+
+            // Add click handler (will be set up by setupThemeSelection)
+            // The click handler is added in setupThemeSelection for consistency
+        };
+        
+        // Override to ensure theme selection works for dynamically added themes
+        const originalAddUnlockedTheme = window.addUnlockedTheme;
+        window.addUnlockedTheme = function(themeName, themeData) {
+            originalAddUnlockedTheme(themeName, themeData);
+            // Re-setup theme selection to include new theme
+            const newOption = document.querySelector(`[data-theme="${themeName}"]`);
+            if (newOption) {
+                newOption.addEventListener('click', function() {
+                    const allOptions = document.querySelectorAll('.theme-option');
+                    allOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    applyTheme(themeName);
+                    localStorage.setItem('websiteTheme', themeName);
+                    
+                    setTimeout(() => {
+                        hideThemeModal();
+                    }, 500);
+                });
+            }
+        };
+
+        // Function to render unlocked themes
+        function renderUnlockedThemes() {
+            unlockedThemes.forEach(themeName => {
+                if (kiraThemes[themeName]) {
+                    window.addUnlockedTheme(themeName, kiraThemes[themeName]);
+                }
+            });
+        }
+
+        // Pagination handlers
+        function setupPagination() {
+            const pageButtons = document.querySelectorAll('.theme-page-btn');
+            const pages = document.querySelectorAll('.theme-page');
+
+            pageButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetPage = this.getAttribute('data-page');
+                    
+                    // Update button states
+                    pageButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update page visibility
+                    pages.forEach(page => {
+                        if (page.getAttribute('data-page') === targetPage) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        // Key validation and unlocking
+        function validateAndUnlockTheme(key) {
+            const trimmedKey = key.trim();
+            
+            if (!trimmedKey) {
+                return { success: false, message: 'Please enter a key' };
+            }
+
+            // Check if key exists in passwords (case-insensitive)
+            const themeName = themePasswords[trimmedKey] || themePasswords[trimmedKey.toLowerCase()];
+            
+            if (!themeName) {
+                console.log('Key not found. Available keys:', Object.keys(themePasswords));
+                console.log('Searched for:', trimmedKey, 'and', trimmedKey.toLowerCase());
+                return { success: false, message: 'Invalid key' };
+            }
+
+            // Check if theme is already unlocked
+            if (unlockedThemes.includes(themeName)) {
+                return { success: false, message: 'Theme already unlocked' };
+            }
+
+            // Check if theme exists in kiraThemes
+            if (!kiraThemes[themeName]) {
+                return { success: false, message: 'Theme not found' };
+            }
+
+            // Unlock theme
+            unlockedThemes.push(themeName);
+            localStorage.setItem('unlockedThemes', JSON.stringify(unlockedThemes));
+            
+            // Add to page 2
+            window.addUnlockedTheme(themeName, kiraThemes[themeName]);
+            
+            return { success: true, message: 'Theme unlocked successfully!' };
+        }
+
+        // Theme selection handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeOptions = document.querySelectorAll('.theme-option');
+            const changeThemeBtn = document.getElementById('changeThemeBtn');
+            const keyInput = document.getElementById('themeKeyInput');
+            const keySubmit = document.getElementById('themeKeySubmit');
+            const keyMessage = document.getElementById('themeKeyMessage');
+
+            // Setup pagination
+            setupPagination();
+
+            // Render unlocked themes
+            renderUnlockedThemes();
+
+            // Key submission handler
+            if (keySubmit && keyInput) {
+                keySubmit.addEventListener('click', async function() {
+                    // Reload passwords in case file was updated
+                    await loadThemePasswords();
+                    
+                    // Debug: log what we're checking
+                    console.log('Validating key:', keyInput.value);
+                    console.log('Available passwords:', themePasswords);
+                    
+                    const result = validateAndUnlockTheme(keyInput.value);
+                    
+                    keyMessage.textContent = result.message;
+                    keyMessage.className = 'theme-key-message ' + (result.success ? 'success' : 'error');
+                    
+                    if (result.success) {
+                        keyInput.value = '';
+                        // Switch to page 2 to show unlocked theme
+                        const page2Btn = document.querySelector('.theme-page-btn[data-page="2"]');
+                        if (page2Btn) {
+                            page2Btn.click();
+                        }
+                    }
+                });
+
+                // Allow Enter key to submit
+                keyInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        keySubmit.click();
+                    }
+                });
+            }
+            
+            // Change theme button handler
+            if (changeThemeBtn) {
+                changeThemeBtn.addEventListener('click', function() {
+                    // Mark current theme as selected
+                    const currentTheme = localStorage.getItem('websiteTheme') || 'pink';
+                    const allThemeOptions = document.querySelectorAll('.theme-option');
+                    allThemeOptions.forEach(opt => {
+                        if (opt.getAttribute('data-theme') === currentTheme) {
+                            opt.classList.add('selected');
+                            // Switch to appropriate page if needed
+                            const themePage = opt.closest('.theme-page');
+                            if (themePage) {
+                                const pageNum = themePage.getAttribute('data-page');
+                                const pageBtn = document.querySelector(`.theme-page-btn[data-page="${pageNum}"]`);
+                                if (pageBtn) {
+                                    pageBtn.click();
+                                }
+                            }
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                    
+                    // Show modal
+                    showThemeModal();
+                });
+            }
+
+            // Light/Dark mode switcher
+            const lightDarkBtn = document.getElementById('lightDarkBtn');
+            const savedMode = localStorage.getItem('colorMode') || 'light';
+            
+            function applyColorMode(mode) {
+                if (mode === 'dark') {
+                    document.documentElement.classList.add('dark-mode');
+                    if (lightDarkBtn) {
+                        lightDarkBtn.textContent = 'Dark';
+                    }
+                } else {
+                    document.documentElement.classList.remove('dark-mode');
+                    if (lightDarkBtn) {
+                        lightDarkBtn.textContent = 'Light';
+                    }
+                }
+                localStorage.setItem('colorMode', mode);
+            }
+            
+            // Apply saved mode on load
+            applyColorMode(savedMode);
+            
+            // Toggle on button click
+            if (lightDarkBtn) {
+                lightDarkBtn.addEventListener('click', function() {
+                    const currentMode = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+                    const newMode = currentMode === 'light' ? 'dark' : 'light';
+                    applyColorMode(newMode);
+                });
+            }
+            
+            // Theme selection handler (works for both regular and unlocked themes)
+            function setupThemeSelection() {
+                const allThemeOptions = document.querySelectorAll('.theme-option');
+                allThemeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const themeName = this.getAttribute('data-theme');
+                        
+                        // Remove selected class from all options
+                        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
+                        
+                        // Add selected class to clicked option
+                        this.classList.add('selected');
+                        
+                        // Apply theme
+                        applyTheme(themeName);
+                        
+                        // Save to localStorage
+                        localStorage.setItem('websiteTheme', themeName);
+                        
+                        // Hide modal after a short delay
+                        setTimeout(() => {
+                            hideThemeModal();
+                        }, 500);
+                    });
+                });
+            }
+            
+            // Setup initial theme selection
+            setupThemeSelection();
+        });
+
+        // Smooth Pink Water Ripple Effect
+        const canvas = document.getElementById('rippleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Load lense and mask images
+        const lenseImg = new Image();
+        const maskImg = new Image();
+        let lenseLoaded = false;
+        let maskLoaded = false;
+        
+        lenseImg.onload = () => {
+            lenseLoaded = true;
+        };
+        maskImg.onload = () => {
+            maskLoaded = true;
+        };
+        
+        lenseImg.src = 'lense.png';
+        maskImg.src = 'mask.png';
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Color palette for ripples (will be updated based on theme)
+        function getRippleColors() {
+            // Check if rainbow theme is active
+            const currentTheme = localStorage.getItem('websiteTheme') || 'pink';
+            if (currentTheme === 'rainbow') {
+                // Full rainbow color palette
+                return [
+                    { r: 255, g: 0, b: 0 },       // Red
+                    { r: 255, g: 128, b: 0 },    // Orange
+                    { r: 255, g: 255, b: 0 },    // Yellow
+                    { r: 128, g: 255, b: 0 },    // Yellow-green
+                    { r: 0, g: 255, b: 128 },    // Green
+                    { r: 0, g: 128, b: 255 },    // Blue
+                    { r: 128, g: 0, b: 255 },    // Indigo
+                    { r: 255, g: 0, b: 128 }     // Magenta/Pink
+                ];
+            }
+            
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const secondary = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+            const border = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+            
+            // Parse hex colors
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 236, g: 72, b: 153 };
+            }
+            
+            const primaryRgb = hexToRgb(primary);
+            const secondaryRgb = hexToRgb(secondary);
+            const borderRgb = hexToRgb(border);
+            
+            return [
+                primaryRgb,
+                secondaryRgb,
+                { r: Math.min(255, primaryRgb.r + 20), g: Math.min(255, primaryRgb.g + 20), b: Math.min(255, primaryRgb.b + 20) },
+                { r: Math.min(255, secondaryRgb.r + 20), g: Math.min(255, secondaryRgb.g + 20), b: Math.min(255, secondaryRgb.b + 20) },
+                { r: Math.max(0, primaryRgb.r - 20), g: Math.max(0, primaryRgb.g - 20), b: Math.max(0, primaryRgb.b - 20) },
+                { r: Math.max(0, secondaryRgb.r - 20), g: Math.max(0, secondaryRgb.g - 20), b: Math.max(0, secondaryRgb.b - 20) },
+                borderRgb,
+                { r: Math.min(255, borderRgb.r + 30), g: Math.min(255, borderRgb.g + 30), b: Math.min(255, borderRgb.b + 30) }
+            ];
+        }
+        
+        let pinkColors = getRippleColors();
+        
+        // Ripple class
+        class Ripple {
+            constructor(x, y, useLense = false) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = useLense ? Math.random() * 150 + 200 : Math.random() * 100 + 140;
+                this.speed = Math.random() * 0.4 + 1.0; // More consistent, smoother speed
+                this.opacity = 1;
+                const colors = getRippleColors();
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.life = 1;
+                this.fadeSpeed = useLense ? 0.008 : 0.010; // Faster fade for shorter lifetime
+                this.startTime = performance.now();
+                this.useLense = useLense;
+            }
+            
+            update() {
+                // Smooth radius growth with easing
+                const progress = this.radius / this.maxRadius;
+                const easedProgress = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+                this.radius += this.speed * (1 + easedProgress * 0.3);
+                
+                this.life -= this.fadeSpeed;
+                // Ultra-smooth easing for opacity (ease-out cubic)
+                const t = Math.max(0, this.life);
+                this.opacity = t * t * (3 - 2 * t); // Smoothstep function
+                
+                return this.life > 0 && this.radius < this.maxRadius;
+            }
+            
+            draw() {
+                if (this.useLense && lenseLoaded && maskLoaded) {
+                    // Use lense and mask images for distortion effect
+                    const size = this.radius * 2;
+                    const halfSize = size / 2;
+                    
+                    // Save context
+                    ctx.save();
+                    
+                    // Create clipping path
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.clip();
+                    
+                    // Draw mask as alpha mask
+                    ctx.globalAlpha = this.opacity * 0.6;
+                    ctx.drawImage(maskImg, this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    // Draw lense with color overlay
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.globalAlpha = this.opacity * 0.4;
+                    ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.5)`;
+                    ctx.fillRect(this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = this.opacity * 0.5;
+                    ctx.drawImage(lenseImg, this.x - halfSize, this.y - halfSize, size, size);
+                    
+                    // Restore context
+                    ctx.restore();
+                } else {
+                    // Regular gradient ripple
+                    const gradient = ctx.createRadialGradient(
+                        this.x, this.y, 0,
+                        this.x, this.y, this.radius
+                    );
+                    
+                    // Ultra-smooth gradient with many color stops
+                    gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.75})`);
+                    gradient.addColorStop(0.2, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.6})`);
+                    gradient.addColorStop(0.4, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.4})`);
+                    gradient.addColorStop(0.6, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.25})`);
+                    gradient.addColorStop(0.75, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.15})`);
+                    gradient.addColorStop(0.9, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.05})`);
+                    gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    // Ultra-smooth outer ring with gradient
+                    const ringGradient = ctx.createRadialGradient(
+                        this.x, this.y, this.radius * 0.9,
+                        this.x, this.y, this.radius
+                    );
+                    ringGradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.2})`);
+                    ringGradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+                    ctx.strokeStyle = ringGradient;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        const ripples = [];
+        let lastRippleTime = 0;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        // Consolidated mouse move handler - handles cursor only (ripples disabled)
+        document.addEventListener('mousemove', (e) => {
+            // Update cursor target positions
+            targetX = e.clientX;
+            targetY = e.clientY;
+            
+            // Ripple trail disabled
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+        
+        // Touch support for mobile
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            // Update cursor positions
+            targetX = touch.clientX;
+            targetY = touch.clientY;
+        });
+        
+        // Click handler for lense/mask ripples
+        document.addEventListener('click', (e) => {
+            // Create single ripple with lense and mask
+            ripples.push(new Ripple(e.clientX, e.clientY, true));
+        });
+        
+        // Animation loop with ultra-smooth rendering
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Clear canvas with transparent background (no white fade)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw ripples with smooth interpolation
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                if (ripples[i].update()) {
+                    ripples[i].draw();
+                } else {
+                    ripples.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Translation dictionary
+        const translations = {
+            // Header
+            'Kirakira': 'きらきら',
+            'developer': '開発者',
+            'maybe': 'たぶん',
+            'Light': 'ライト',
+            'Dark': 'ダーク',
+            'Change': '変更',
+            'Theme': 'テーマ',
+            
+            // Navigation
+            'About': 'について',
+            'Achievements': '実績',
+            'Social': 'ソーシャル',
+            'Contact': 'コンタクト',
+            'Chat': 'チャット',
+            
+            // About Section - complete sentences
+            'Hi': 'こんにちは',
+            "I'm": '私は',
+            'kirakira': 'きらきら',
+            'who': 'です',
+            'mainly': '主に',
+            'focuses': 'フォーカスして',
+            'Python': 'パイソン',
+            "I'm": 'います',
+            'when': 'とき',
+            'coding': 'コーディング',
+            'some': 'いくつかの',
+            'simple': 'シンプルな',
+            'calc': '計算',
+            'script': 'スクリプト',
+            'C++': 'C++',
+            'involving': '含む',
+            'Splatoon': 'スプラトゥーン',
+            '3': '3',
+            'modding': '改造',
+            'For': 'ために',
+            'ASM': 'アセンブリ',
+            'I': '私',
+            'only': 'だけ',
+            'know': '知っています',
+            'very': 'とても',
+            'basic': '基本的な',
+            'ARMv8': 'ARMv8',
+            'opcodes': 'オペコード',
+            'Nintendo': '任天堂',
+            'Switch': 'スイッチ',
+            'uses': '使用',
+            'so': 'なので',
+            'unfortunately': '残念ながら',
+            'can': 'できません',
+            "can't": 'できません',
+            'make': '作る',
+            'patches': 'パッチ',
+            'all': 'すべて',
+            'by': 'によって',
+            'myself': '自分自身',
+            ';-;': ';-;',
+            'Anyways': 'とにかく',
+            'look': '見て',
+            'at': 'ください',
+            'my': '私の',
+            'achievements': '実績',
+            'of': 'の',
+            
+            // Project Card
+            'KirunaNX': 'キルナNX',
+            'A': '一つの',
+            'functional': '機能的な',
+            'mod': 'モッド',
+            'menu': 'メニュー',
+            'with': 'と',
+            'a': '',
+            'nice': '良い',
+            'and': 'と',
+            'smooth': 'スムーズな',
+            'design': 'デザイン',
+            'plus': 'プラス',
+            'functioning': '機能する',
+            'patcher': 'パッチャー',
+            '50/50': '50/50',
+            'online': 'オンライン',
+            'safe': '安全',
+            'is': 'は',
+            'based': 'ベースにした',
+            'on': 'に',
+            "GLOSHSEP's": 'GLOSHSEPの',
+            's3_imgui_base': 's3_imgui_base',
+            'thanks': 'ありがとう',
+            'for': 'ために',
+            'that': 'それ',
+            'An': '一つの',
+            'old': '古い',
+            'version': 'バージョン',
+            'that': 'が',
+            'public': '公開',
+            'template': 'テンプレート',
+            'purpose': '目的',
+            'as': 'として',
+            'has': 'なった',
+            'become': 'なる',
+            'private': 'プライベート',
+            'View': 'ビュー',
+            'GitHub': 'ギットハブ',
+            '→': '→',
+            
+            // Social Section
+            'Connect': '接続',
+            'With': 'と',
+            'Me': '私',
+            'Follow': 'フォローして',
+            'me': '私',
+            'social': 'ソーシャル',
+            'media': 'メディア',
+            'to': 'へ',
+            'stay': 'いてください',
+            'updated': '更新',
+            'latest': '最新',
+            'projects': 'プロジェクト',
+            'updates': 'アップデート',
+            'X': 'X',
+            'Twitter': 'ツイッター',
+            
+            // Contact Section
+            'Get': 'お問い合わせ',
+            'in': '',
+            'Touch': 'ください',
+            'Feel': '気軽に',
+            'free': '',
+            'reach': '連絡',
+            'out': 'して',
+            'if': 'もし',
+            'you': 'あなた',
+            "you'd": 'あなたが',
+            'would': 'したい',
+            'like': 'なら',
+            'collaborate': 'コラボレート',
+            'or': 'または',
+            'just': 'ただ',
+            'say': '言う',
+            'hello': 'こんにちは',
+            'Email': 'メール',
+            
+            // Footer
+            '©': '©',
+            '2024': '2024',
+            'All': 'すべて',
+            'rights': '権利',
+            'reserved': '予約済み',
+            
+            // Theme Modal
+            'Choose': '選択',
+            'Your': 'あなたの',
+            'Select': '選択',
+            'color': 'カラー',
+            'theme': 'テーマ',
+            'your': 'あなたの',
+            'visit': '訪問',
+            'Page': 'ページ',
+            '1': '1',
+            '2': '2',
+            'Blue': 'ブルー',
+            'Pink': 'ピンク',
+            'Red': 'レッド',
+            'Violet': 'バイオレット',
+            'Green': 'グリーン',
+            'Yellow': 'イエロー',
+            'White': 'ホワイト',
+            'Black': 'ブラック',
+            '[BETA]': '[ベータ]',
+            'Rainbow': 'レインボー',
+            'No': 'いいえ',
+            'unlocked': 'アンロック済み',
+            'themes': 'テーマ',
+            'yet': 'まだ',
+            'Enter': '入力',
+            'key': 'キー',
+            'below': '以下',
+            'unlock': 'アンロック',
+            'special': '特別',
+            'KiraThemes™': 'キラテーマ™',
+            'want': '希望',
+            'use': '使用',
+            'enter': '入力',
+            'the': '',
+            'Unlock': 'アンロック',
+            'placeholder': 'プレースホルダー'
+        };
+
+        // Function to translate text content
+        function translateText(text) {
+            // Complete paragraph translations
+            const paragraphTranslations = {
+                "Hi! I'm kirakira, who mainly focuses on Python when I'm coding some simple calc script and some C++ when involving Splatoon 3 modding. For ASM, I only know some very basic ARMv8 opcodes (Nintendo Switch uses ARMv8) so unfortunately, I can't make patches all by myself ;-;": "こんにちは！私はきらきらです。主にPythonでシンプルな計算スクリプトをコーディングしたり、スプラトゥーン3の改造に関わるときC++を使ったりします。ASMに関しては、とても基本的なARMv8オペコードしか知りません（Nintendo SwitchはARMv8を使用）。なので残念ながら、自分でパッチを作ることができません ;-;",
+                "Anyways, look at some of my achievements!": "とにかく、私の実績を見てください！",
+                "A functional Splatoon 3 mod menu with a nice and smooth design plus a functioning patcher. 50/50 online safe.": "機能的なスプラトゥーン3モッドメニュー。美しくスムーズなデザインと機能するパッチャー付き。50/50オンライン安全。",
+                "KirunaNX is based on GLOSHSEP's s3_imgui_base, thanks for that. An old version that is public for a template purpose, as KirunaNX has become private.": "KirunaNXはGLOSHSEPのs3_imgui_baseをベースにしています。ありがとうございます。テンプレート目的で公開されている古いバージョンですが、KirunaNXはプライベートになりました。",
+                "Follow me on social media to stay updated with my latest projects and updates!": "私の最新プロジェクトやアップデートをフォローしてください！",
+                "Feel free to reach out if you'd like to collaborate or just say hello!": "コラボレーションや挨拶をしたい方はお気軽にお問い合わせください！",
+                "Select a color theme for your visit": "あなたの訪問のためのカラーテーマを選択してください",
+                "No unlocked themes yet. Enter a key below to unlock special KiraThemes™!": "まだアンロックされたテーマはありません。特別なキラテーマ™をアンロックするには以下にキーを入力してください！",
+                "If you want to use special KiraThemes™, enter the key below:": "特別なキラテーマ™を使用したい場合は、以下にキーを入力してください：",
+                "Enter unlock key...": "アンロックキーを入力..."
+            };
+            
+            // Try exact paragraph match first
+            if (paragraphTranslations[text]) {
+                return paragraphTranslations[text];
+            }
+            
+            // Special handling for common phrases
+            const specialPhrases = {
+                "Hi! I'm kirakira": "こんにちは!私はきらきらです",
+                "I'm kirakira": "私はきらきらです",
+                "I'm": "私は",
+                "I'm coding": "私はコーディング",
+                "who mainly": "主に",
+                "can't make": "作れません",
+                "can't": "できません",
+                "you'd like": "したいなら"
+            };
+            
+            // Try exact phrase match
+            if (specialPhrases[text]) {
+                return specialPhrases[text];
+            }
+            
+            // Try exact match in main dictionary
+            if (translations[text]) {
+                return translations[text];
+            }
+            
+            // Try case-insensitive match
+            const lowerText = text.toLowerCase();
+            for (const [key, value] of Object.entries(translations)) {
+                if (key.toLowerCase() === lowerText) {
+                    return value;
+                }
+            }
+            
+            // Handle contractions by splitting on apostrophe
+            if (text.includes("'")) {
+                const parts = text.split("'");
+                let translated = '';
+                parts.forEach((part, index) => {
+                    const partKey = index === 0 ? part : "'" + part;
+                    const found = translations[partKey] || translations[part] || part;
+                    translated += found;
+                });
+                if (translated !== text) {
+                    return translated;
+                }
+            }
+            
+            // Try word by word translation
+            const words = text.split(/\s+/);
+            const translatedWords = words.map(word => {
+                // Check for exact match first (including punctuation)
+                if (translations[word]) {
+                    return translations[word];
+                }
+                
+                // Clean word and try again
+                const cleanWord = word.replace(/[^a-zA-Z0-9']/g, '');
+                
+                // Check if it's a contraction
+                if (cleanWord.includes("'")) {
+                    const parts = cleanWord.split("'");
+                    const firstPart = translations[parts[0]] || parts[0];
+                    const secondPart = translations["'" + parts[1]] || translations[parts[1]] || parts[1];
+                    return firstPart + secondPart;
+                }
+                
+                for (const [key, value] of Object.entries(translations)) {
+                    if (key.toLowerCase() === cleanWord.toLowerCase()) {
+                        return value;
+                    }
+                }
+                return word;
+            });
+            
+            const result = translatedWords.join('');
+            return result !== text ? result : text;
+        }
+
+        // Create Japanese layer with enhanced glass effect
+        function createJapaneseLayer() {
+            const japaneseLayer = document.createElement('div');
+            japaneseLayer.className = 'japanese-layer';
+            japaneseLayer.id = 'japanese-layer';
+            
+            // Clone the entire body content
+            const bodyClone = document.body.cloneNode(true);
+            
+            // Remove scripts, canvas, cursors, SVG filters from clone
+            bodyClone.querySelectorAll('script, #rippleCanvas, #cursorBall, #liquid-glass-cursor, .japanese-layer, #glass-filter').forEach(el => el.remove());
+            
+            // Walk through all text nodes and translate
+            const walker = document.createTreeWalker(
+                bodyClone,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.nodeValue.trim()) {
+                    textNodes.push(node);
+                }
+            }
+            
+            textNodes.forEach(textNode => {
+                const translated = translateText(textNode.nodeValue.trim());
+                if (translated !== textNode.nodeValue.trim()) {
+                    textNode.nodeValue = translated;
+                }
+            });
+            
+            japaneseLayer.appendChild(bodyClone);
+            document.body.appendChild(japaneseLayer);
+            
+            return japaneseLayer;
+        }
+
+        // Initialize Japanese layer after DOM is ready
+        let japaneseLayer = null;
+        
+        // Wait for all content to load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                japaneseLayer = createJapaneseLayer();
+                document.body.classList.add('japanese-ready');
+            }, 100);
+        });
+
+        // Magnetic cursor with smooth following
+        const cursorBall = document.getElementById('cursorBall');
+        const liquidGlass = document.getElementById('liquid-glass-cursor');
+        let cursorX = 0;
+        let cursorY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let glassX = 0;
+        let glassY = 0;
+        let magnetTarget = null;
+        let currentOverlays = [];
+        
+        // Smooth cursor animation
+        function animateCursor() {
+            if (magnetTarget) {
+                const rect = magnetTarget.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // Magnetic pull
+                targetX += (centerX - targetX) * 0.15;
+                targetY += (centerY - targetY) * 0.15;
+            }
+            
+            cursorX += (targetX - cursorX) * 0.15;
+            cursorY += (targetY - cursorY) * 0.15;
+            
+            // Glass follows with slight delay
+            glassX += (targetX - glassX) * 0.1;
+            glassY += (targetY - glassY) * 0.1;
+            
+            cursorBall.style.left = cursorX + 'px';
+            cursorBall.style.top = cursorY + 'px';
+            
+            liquidGlass.style.left = glassX + 'px';
+            liquidGlass.style.top = glassY + 'px';
+            
+            // Update Japanese layer clip-path with distortion effect
+            if (japaneseLayer) {
+                const radius = 100; // Half of the liquid glass circle size
+                
+                // Account for scroll position
+                const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                
+                // Adjust glass position for scroll
+                const adjustedX = glassX + scrollX;
+                const adjustedY = glassY + scrollY;
+                
+                const mainCircle = `circle(${radius}px at ${adjustedX}px ${adjustedY}px)`;
+                
+                japaneseLayer.style.clipPath = mainCircle;
+            }
+            
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+        // (Removed individual character overlay system - using layer mask instead)
+        
+        // Mouse move handler
+        // (Already handled in ripple section above)
+        
+        // Touch handler
+        // (Already handled in ripple section above)
+        
+        // Initialize cursor position
+        targetX = cursorX = glassX = window.innerWidth / 2;
+        targetY = cursorY = glassY = window.innerHeight / 2;
+        
+        // Magnetic hover effect on interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, input, textarea, select, .project-card, .social-link');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', function() {
+                cursorBall.classList.add('hover');
+                magnetTarget = this;
+                
+                // Add magnetic effect to the element itself
+                this.style.transition = 'transform 0.3s ease';
+            });
+            
+            el.addEventListener('mousemove', function(e) {
+                if (magnetTarget === this) {
+                    const rect = this.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    
+                    const deltaX = (e.clientX - centerX) * 0.2;
+                    const deltaY = (e.clientY - centerY) * 0.2;
+                    
+                    this.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                }
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                cursorBall.classList.remove('hover');
+                magnetTarget = null;
+                this.style.transform = '';
+            });
+        });
+    </script>
+</body>
+</html>
+
