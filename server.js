@@ -93,12 +93,51 @@ function generateToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// Verify token and get username
+// Verify token and get username (reads from users.json file)
 async function verifyToken(token) {
-    const users = await readUsers();
-    const user = users.find(u => u.token === token);
-    return user ? user.username : null;
+    try {
+        const users = await readUsers();
+        const user = users.find(u => u.token === token);
+        return user ? user.username : null;
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        return null;
+    }
 }
+
+// Save users endpoint (for client to save user data)
+app.post('/api/save-users', async (req, res) => {
+    try {
+        const users = req.body;
+        await writeUsers(users);
+        res.json({ message: 'Users saved successfully' });
+    } catch (error) {
+        console.error('Save users error:', error);
+        res.status(500).json({ error: 'Failed to save users' });
+    }
+});
+
+// Serve users.json file (for client to read)
+app.get('/users.json', async (req, res) => {
+    try {
+        const users = await readUsers();
+        res.json(users);
+    } catch (error) {
+        console.error('Error serving users.json:', error);
+        res.json([]);
+    }
+});
+
+// Also serve from chat directory
+app.get('/chat/users.json', async (req, res) => {
+    try {
+        const users = await readUsers();
+        res.json(users);
+    } catch (error) {
+        console.error('Error serving users.json:', error);
+        res.json([]);
+    }
+});
 
 // Middleware to verify token
 async function authenticateToken(req, res, next) {
@@ -239,6 +278,21 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
         console.error('Send message error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// Root API endpoint
+app.get('/api', (req, res) => {
+    res.json({ 
+        status: 'ok',
+        message: 'Kirakira Chat API',
+        endpoints: {
+            signup: 'POST /api/signup',
+            login: 'POST /api/login',
+            messages: 'GET /api/messages',
+            sendMessage: 'POST /api/messages',
+            health: 'GET /api/health'
+        }
+    });
 });
 
 // Health check endpoint
