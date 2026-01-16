@@ -249,17 +249,6 @@
         .back-link:hover {
             text-decoration: underline;
         }
-
-        .status-indicator {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .status-indicator.local {
-            background: rgba(251, 207, 232, 0.3);
-        }
     </style>
 </head>
 <body>
@@ -307,10 +296,7 @@
         <!-- Chat Section -->
         <div class="chat-container" id="chatContainer">
             <div class="chat-header">
-                <div>
-                    <h2>Public Chat</h2>
-                    <span class="status-indicator local">Reading from local file</span>
-                </div>
+                <h2>Public Chat</h2>
                 <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
             <div class="messages" id="messages"></div>
@@ -322,21 +308,14 @@
     </div>
 
     <script>
-        // VPS URL for sending messages
         const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
         const VPS_API_URL = `${protocol}//76.13.24.155/api`;
-        
-        // Local file for reading messages
         const LOCAL_MESSAGES_FILE = './messages.json';
         
-        console.log('VPS API URL (for sending):', VPS_API_URL);
-        console.log('Local messages file (for reading):', LOCAL_MESSAGES_FILE);
-
         let currentToken = localStorage.getItem('chatToken');
         let currentUsername = localStorage.getItem('chatUsername');
-        let usersData = []; // Loaded from users.json
+        let usersData = [];
 
-        // Hash password function (simple SHA-256)
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -345,22 +324,18 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Generate token
         function generateToken() {
             const array = new Uint8Array(32);
             crypto.getRandomValues(array);
             return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Load users from local file
         async function loadUsers() {
             try {
                 const response = await fetch('./users.json');
                 if (response.ok) {
                     usersData = await response.json();
-                    console.log('Loaded users from local file:', usersData.length);
                 } else {
-                    console.warn('Could not load users.json, starting with empty list');
                     usersData = [];
                 }
             } catch (error) {
@@ -369,22 +344,16 @@
             }
         }
 
-        // Save users to local file (via localStorage for demo, ideally via server)
         async function saveUsers() {
-            // For local development, we'll use localStorage as a fallback
-            // In production, you'd want a proper backend endpoint
             try {
                 localStorage.setItem('chatUsers', JSON.stringify(usersData));
-                console.log('Saved users to localStorage');
             } catch (error) {
                 console.error('Error saving users:', error);
             }
         }
 
-        // Initialize: load users on page load
         loadUsers();
 
-        // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -421,7 +390,6 @@
             document.getElementById('successMessage').classList.remove('show');
         }
 
-        // Login - Client-side authentication
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
@@ -430,19 +398,14 @@
             const password = document.getElementById('loginPassword').value;
 
             try {
-                // Ensure users are loaded
                 if (usersData.length === 0) {
                     await loadUsers();
                 }
 
-                // Hash the password
                 const hashedPassword = await hashPassword(password);
-
-                // Find user
                 const user = usersData.find(u => u.username === username && u.password === hashedPassword);
 
                 if (user) {
-                    // Generate new token
                     const token = generateToken();
                     user.token = token;
                     await saveUsers();
@@ -461,7 +424,6 @@
             }
         });
 
-        // Signup - Client-side registration
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
@@ -470,22 +432,18 @@
             const password = document.getElementById('signupPassword').value;
 
             try {
-                // Ensure users are loaded
                 if (usersData.length === 0) {
                     await loadUsers();
                 }
 
-                // Check if user already exists
                 if (usersData.find(u => u.username === username)) {
                     showError('Username already exists');
                     return;
                 }
 
-                // Hash password
                 const hashedPassword = await hashPassword(password);
                 const token = generateToken();
 
-                // Create new user
                 const newUser = {
                     username,
                     password: hashedPassword,
@@ -508,7 +466,6 @@
             }
         });
 
-        // Show chat
         function showChat() {
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('chatContainer').classList.add('active');
@@ -516,28 +473,23 @@
             startPolling();
         }
 
-        // Load messages from LOCAL file
         async function loadMessages() {
             if (!currentToken) return;
 
             try {
                 const response = await fetch(LOCAL_MESSAGES_FILE);
-
                 if (response.ok) {
                     const messages = await response.json();
                     displayMessages(messages);
-                    console.log('Loaded messages from local file');
                 } else {
-                    console.warn('Could not load local messages file');
                     displayMessages([]);
                 }
             } catch (error) {
-                console.error('Error loading messages from local file:', error);
+                console.error('Error loading messages:', error);
                 displayMessages([]);
             }
         }
 
-        // Display messages
         function displayMessages(messages) {
             const messagesEl = document.getElementById('messages');
             messagesEl.innerHTML = '';
@@ -582,22 +534,17 @@
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        // Send message to VPS
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-        document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
 
-            if (!message || !currentToken) return;
+            if (!message || !currentToken) {
+                console.log('Cannot send - message:', message, 'token:', currentToken);
+                return;
+            }
 
             try {
-                console.log('Sending message to VPS with token:', currentToken);
+                console.log('Sending message to VPS...');
                 
                 const response = await fetch(`${VPS_API_URL}/messages`, {
                     method: 'POST',
@@ -611,25 +558,47 @@
                 if (response.ok) {
                     input.value = '';
                     const data = await response.json();
-                    console.log('Message sent successfully to VPS:', data);
-                    
-                    // Optionally reload messages after a short delay
-                    // to see if the VPS has updated the local file
+                    console.log('Message sent successfully:', data);
+                    showSuccess('Message sent!');
                     setTimeout(() => loadMessages(), 500);
                 } else {
                     const data = await response.json();
                     showError(data.error || 'Failed to send message');
+                    console.error('Send failed:', data);
                 }
             } catch (error) {
-                showError('Failed to send message to VPS: ' + error.message);
-                console.error('Send message error:', error);
+                showError('Failed to send message: ' + error.message);
+                console.error('Send error:', error);
             }
         }
 
-        // Polling for new messages from LOCAL file
+        // Wait for DOM to be ready before attaching listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const sendBtn = document.getElementById('sendBtn');
+            const messageInput = document.getElementById('messageInput');
+            
+            if (sendBtn) {
+                sendBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Send button clicked');
+                    sendMessage();
+                });
+            }
+            
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        console.log('Enter pressed');
+                        sendMessage();
+                    }
+                });
+            }
+        });
+
         let pollingInterval;
         function startPolling() {
-            pollingInterval = setInterval(loadMessages, 2000); // Poll local file every 2 seconds
+            pollingInterval = setInterval(loadMessages, 2000);
         }
 
         function stopPolling() {
@@ -638,7 +607,6 @@
             }
         }
 
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             currentToken = null;
             currentUsername = null;
@@ -649,7 +617,6 @@
             document.getElementById('chatContainer').classList.remove('active');
         });
 
-        // Check if already logged in
         if (currentToken && currentUsername) {
             showChat();
         }
